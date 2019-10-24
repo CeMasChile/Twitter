@@ -38,13 +38,9 @@ for i in range(len(keywords)):
     if keywords[i][0] == ' ':
         keywords[i] = keywords[i][1::]
 
-# se pasan al formato que usa la API de twitter
-KW = ' OR '.join(keywords)
-
-
 # Queremos buscar t0do lo que tenga alguna palabra que aparezca en la lista de keywords
 
-search_words = '#piñerarenuncia'
+search_words = ' OR '.join(keywords[:9])
 date_since = "2019-10-16"
 
 
