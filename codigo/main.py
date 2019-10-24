@@ -12,7 +12,7 @@ with open('./keys.txt') as f:
     access_secret = f.readline()[:-1]
     f.close()
 
-auth = tweepy.OAuthHandler(consumer_key,consumer_secret)
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_key, access_secret)
 
 # creamos un objeto API
@@ -36,3 +36,10 @@ tweets_list = [tweet for tweet in tweets]
 
 
 users_locs = [[h.user.screen_name, h.user.location] for h in tweets_list]
+
+
+# Se crea un DataFrame de Pandas
+
+tweet_text = pd.DataFrame(data=users_locs,
+                    columns=['user', "location"])
+
