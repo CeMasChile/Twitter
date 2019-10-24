@@ -1,9 +1,16 @@
 import os
+import csv
 import tweepy
 import pandas as pd
 
-# Primero nos autenticamos en twitter
 
+
+
+
+
+
+
+# Primero nos autenticamos en twitter
 
 with open('./keys.txt') as f:
     consumer_key = f.readline()[:-1]
@@ -20,7 +27,22 @@ auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth)
 
 
-# Queremos buscar t0do lo que tenga #piñerarenuncia
+# Abrimos las keywords en una lista de python
+
+with open('./kw.csv', 'r') as f:
+    reader = csv.reader(f)
+    keywords = list(reader)[0]
+
+# limpiamos los espacios
+for i in range(len(keywords)):
+    if keywords[i][0] == ' ':
+        keywords[i] = keywords[i][1::]
+
+# se pasan al formato que usa la API de twitter
+KW = ' OR '.join(keywords)
+
+
+# Queremos buscar t0do lo que tenga alguna palabra que aparezca en la lista de keywords
 
 search_words = '#piñerarenuncia'
 date_since = "2019-10-16"
