@@ -2,14 +2,12 @@ import csv
 import sys
 import time
 
-import simplejson as json
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 
 import config
 from main import get_keywords
-from utils import parse_tweet
 
 
 class StreamListener(StreamListener):
@@ -152,6 +150,7 @@ class StreamListener(StreamListener):
         except Exception:
             print("error in geo")
     '''
+
 
 def read_tweets(region, track):
     # AUTH #
