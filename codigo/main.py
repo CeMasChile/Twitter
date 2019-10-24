@@ -54,3 +54,12 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+'''
+# drop non located tweets
+df = tweet_text.copy()
+df['location'].replace('', np.nan, inplace=True)
+df.dropna(subset=['location'], inplace=True)
+df
+'''
