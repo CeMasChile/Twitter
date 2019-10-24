@@ -50,5 +50,7 @@ def main():
     # DATAFRAME #
     tweet_text = pd.DataFrame(data=users_locs,
                               columns=['user', "location"])
+    return tweet_text
+
 if __name__ == '__main__':
     main()
