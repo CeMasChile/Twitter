@@ -1,7 +1,8 @@
 import csv
 import tweepy
 import pandas as pd
-from codigo import config
+import config
+
 
 
 def get_keywords():
