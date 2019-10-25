@@ -33,7 +33,7 @@ def main():
 
     else:
         df = csv_dataframe()
-        print(df.colums())
+        print(df.columns)
 
 
 if __name__ == '__main__':
