@@ -4,6 +4,7 @@ import pandas as pd
 import config
 
 
+
 def get_keywords():
     # Abrimos las keywords en una lista de python
     with open('./kw.csv', 'r') as f:
