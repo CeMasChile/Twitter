@@ -32,7 +32,7 @@ def main():
     since = "2019-10-20"
     until = "2019-10-23"
     tweets_text, tweets_dates, tweets_t = \
-        tweets_time(keyword_tweets, since=since, until=until, num=500)
+        tweets_time(keyword_tweets, since=since, until=until, num=10)
 
     plot_trends(news_t, tweets_t)
 
