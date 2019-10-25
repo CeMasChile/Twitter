@@ -4,6 +4,7 @@
 import csv
 import json
 import matplotlib.pyplot as plt
+import matplotlib.dates as md
 import numpy as np
 import sys
 import tweepy as tw
@@ -20,6 +21,14 @@ with open('./keys.txt') as f:
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# parameters
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+MAX_NTWEETS = 1000
+
+LOAD_TWEETS = True
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # main
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def main():
@@ -31,36 +40,66 @@ def main():
     keyword_tweets = '#PiñeraRenuncia'
     since = "2019-10-20"
     until = "2019-10-23"
-    tweets_text, tweets_dates, tweets_t = \
-        tweets_time(keyword_tweets, since=since, until=until, num=10)
+    if(LOAD_TWEETS is True):
+        tweets_text, tweets_dates, tweets_t = \
+            load_tweets_data("tweets_%s_%s_%s.npy" % (keyword_tweets, since, until))
+    else:
+        tweets_text, tweets_dates, tweets_t = \
+            tweets_time(keyword_tweets, since=since, until=until, num=MAX_NTWEETS,
+                        savename="tweets_%s_%s_%s" % (keyword_tweets, since, until))
 
-    plot_trends(news_t, tweets_t)
+    plot_trends(tweets_t, news_t, title="Uso de %s en Twitter" % keyword_tweets)
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def plot_trends(tweets_t, news_t, filename="trends"):
+def plot_trends(tweets_t, news_t, title=None, filename="trends"):
     """Plot histogram with tweets time and vertical lines to denote news publications.
 
     Parameters:
         tweets_t (int[:]): publication time of tweets since epoch
         news_t (int[:]): time of news since epoch
     """
+    # formating variables
+    xlim = [np.min(tweets_t), np.max(tweets_t)]
+
+    xticks = np.linspace(xlim[0], xlim[1], num=6)
+    xticks_labels = ["" for _ in xticks]
+    for i in range(1, len(xticks)):
+        xticks_labels[i] = datetime.utcfromtimestamp(xticks[i]).strftime('%Y-%m-%d %H:%M')
+
+    # plot
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    ax.hist(tweets_t, color="darkblue")
+    ax.hist(tweets_t, bins=np.unique(tweets_t).shape[0], color="darkblue",
+            edgecolor='black', linewidth=0.5)
     for t in news_t:
         ax.axvline(t, color="red")
 
-    ax.set_xlim([np.min(tweets_t), np.max(tweets_t)])
+    ax.set_xlim(xlim)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticks_labels, rotation=25, ha="right")
+
+    ax.set_title(title, fontsize=18)
+    ax.set_ylabel("Numero de Tweets", fontsize=15)
 
     fig.tight_layout()
     fig.savefig("%s.png" % filename)
 
     plt.show()
     plt.close(fig)
+
+
+def load_tweets_data(filename):
+    data = np.load(filename)
+
+    tweets_text = list(data[0])
+    tweets_dates = list(data[1])
+    tweets_t = list(data[2])
+
+    return tweets_text, tweets_dates, tweets_t
 
 
 def tweets_time(keyword, since=None, until=None, num=None, savename=None):
@@ -94,9 +133,9 @@ def tweets_time(keyword, since=None, until=None, num=None, savename=None):
         date_arr[n] = date
         time_arr[n] = datetime(date.year, date.month, date.day, date.hour, date.minute).timestamp()
 
-    data = text_arr[:n], date_arr[:n], time_arr[:n]
+    data = (text_arr[:n+1], date_arr[:n+1], time_arr[:n+1])
     if(savename is not None):
-        np.save(savename, data)
+        np.save("%s.npy" % savename, data)
 
     return data
 
