@@ -88,7 +88,7 @@ def tweets_time(keyword, since=None, until=None, num=None, savename=None):
     date_arr = [None for _ in range(num)]
     time_arr = [None for _ in range(num)]
     for n, tweet in enumerate(tweets):
-        text_arr[n] = tweet.full_text
+        text_arr[n] = tweet.text
 
         date = tweet.created_at
         date_arr[n] = date
