@@ -4,10 +4,9 @@
 import csv
 import json
 import matplotlib.pyplot as plt
-import matplotlib.dates as md
 import numpy as np
 import sys
-import tweepy as tw
+import tweepy
 
 from datetime import datetime
 
@@ -34,27 +33,30 @@ LOAD_TWEETS = True
 def main():
     filename_news = "biobio.json"
     keyword_news = "militar"
-    news_t = news_time(filename_news, keyword_news)
+    news_time = news_data(filename_news, keyword_news)
 
     # keyword_tweets = '#piñerarenuncia'
     keyword_tweets = '#PiñeraRenuncia'
     since = "2019-10-20"
     until = "2019-10-23"
     if(LOAD_TWEETS is True):
-        tweets_text, tweets_dates, tweets_t = \
+        tweets_text, tweets_dates, tweets_time = \
             load_tweets_data("tweets_%s_%s_%s.npy" % (keyword_tweets, since, until))
     else:
-        tweets_text, tweets_dates, tweets_t = \
-            tweets_time(keyword_tweets, since=since, until=until, num=MAX_NTWEETS,
+        tweets_text, tweets_dates, tweets_time = \
+            tweets_data(keyword_tweets, since=since, until=until, num=MAX_NTWEETS,
                         savename="tweets_%s_%s_%s" % (keyword_tweets, since, until))
 
-    plot_trends(tweets_t, news_t, title="Uso de %s en Twitter" % keyword_tweets)
+    plot_trends(tweets_time, news_time,
+                title="Uso de %s en Twitter" % keyword_tweets,
+                label_vline="Titular con \"%s\"" % keyword_news)
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def plot_trends(tweets_t, news_t, title=None, filename="trends"):
+def plot_trends(tweets_t, news_t, title=None, label_vline=None,
+                filename="trends"):
     """Plot histogram with tweets time and vertical lines to denote news publications.
 
     Parameters:
@@ -75,7 +77,11 @@ def plot_trends(tweets_t, news_t, title=None, filename="trends"):
 
     ax.hist(tweets_t, bins=np.unique(tweets_t).shape[0], color="darkblue",
             edgecolor='black', linewidth=0.5)
-    for t in news_t:
+    if(label_vline is None):
+        ax.axvline(news_t[0], color="red")
+    else:
+        ax.axvline(news_t[0], color="red", label=label_vline)
+    for t in news_t[1:]:
         ax.axvline(t, color="red")
 
     ax.set_xlim(xlim)
@@ -85,6 +91,8 @@ def plot_trends(tweets_t, news_t, title=None, filename="trends"):
     ax.set_title(title, fontsize=18)
     ax.set_ylabel("Numero de Tweets", fontsize=15)
 
+    if(label_vline is not None):
+        ax.legend()
     fig.tight_layout()
     fig.savefig("%s.png" % filename)
 
@@ -102,7 +110,7 @@ def load_tweets_data(filename):
     return tweets_text, tweets_dates, tweets_t
 
 
-def tweets_time(keyword, since=None, until=None, num=None, savename=None):
+def tweets_data(keyword, since=None, until=None, num=None, savename=None):
     """Extract tweets with a certain keyword.
 
     Parameters:
@@ -117,11 +125,11 @@ def tweets_time(keyword, since=None, until=None, num=None, savename=None):
         date_arr (str[:]): publication date of the tweets.
         time_arr (int[:]): publication time of the tweets since epoch
     """
-    auth = tw.OAuthHandler(consumer_key, consumer_secret)
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_key, access_secret)
-    api = tw.API(auth, wait_on_rate_limit=True)
+    api = tweepy.API(auth, wait_on_rate_limit=True)
 
-    tweets = tw.Cursor(api.search, q=keyword, lang='es', since=since, until=until).items(num)
+    tweets = tweepy.Cursor(api.search, q=keyword, lang='es', since=since, until=until).items(num)
 
     text_arr = [None for _ in range(num)]
     date_arr = [None for _ in range(num)]
@@ -140,7 +148,7 @@ def tweets_time(keyword, since=None, until=None, num=None, savename=None):
     return data
 
 
-def news_time(filename, keyword):
+def news_data(filename, keyword):
     """Extract publication time from news database.
 
     Parameters:
