@@ -51,5 +51,16 @@ def main():
     # DATAFRAME #
     tweet_text = pd.DataFrame(data=users_locs,
                               columns=['user', "location"])
+    return tweet_text
+
 if __name__ == '__main__':
     main()
+
+
+'''
+# drop non located tweets
+df = tweet_text.copy()
+df['location'].replace('', np.nan, inplace=True)
+df.dropna(subset=['location'], inplace=True)
+df
+'''
