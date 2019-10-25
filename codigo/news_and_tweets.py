@@ -25,16 +25,16 @@ with open('./keys.txt') as f:
 def main():
     filename_news = "biobio.json"
     keyword_news = "militar"
-    news_time = news_time(filename_news, keyword_news)
+    news_t = news_time(filename_news, keyword_news)
 
     # keyword_tweets = '#piñerarenuncia'
     keyword_tweets = '#PiñeraRenuncia'
     since = "2019-10-20"
     until = "2019-10-23"
-    tweets_text, tweets_dates, tweets_time = \
+    tweets_text, tweets_dates, tweets_t = \
         tweets_time(keyword_tweets, since=since, until=until, num=500)
 
-    plot_trends(news_time, tweets_time)
+    plot_trends(news_t, tweets_t)
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
