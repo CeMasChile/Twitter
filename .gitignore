@@ -3,11 +3,7 @@ config.py
 .DS_STORE
 .idea
 __pycache__
-
-config.py
-.DS_STORE
-.idea
-__pycache__
+OutputStreaming.txt
 
 # Created by https://www.gitignore.io/api/latex,pycharm
 # Edit at https://www.gitignore.io/?templates=latex,pycharm
