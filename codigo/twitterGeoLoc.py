@@ -1,7 +1,7 @@
 import csv
 import sys
 import time
-
+from datetime import timedelta
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
@@ -71,7 +71,7 @@ class StreamListener(StreamListener):
 
             # Write the tweet's information to the csv file
             csvWriter.writerow([status.text,
-                                status.created_at,
+                                status.created_at-timedelta(hours=-3),
                                 status.geo,
                                 status.lang,
                                 status.place,
@@ -108,13 +108,7 @@ class StreamListener(StreamListener):
         # Return nothing
         return
 
-    def on_limit(self, status):
-        # Print rate limiting error
-        print("Rate Limit Exceeded, Sleep for 15 Mins")
 
-        time.sleep(15 * 60)
-
-        return True
 
     def on_error(self, status_code):
         # Print the error code
@@ -164,7 +158,7 @@ def read_tweets(region, track):
     filename = 'OutputStreaming'
 
     # INIT STREAM #
-    streamer = Stream(auth=auth, listener=l)
+    streamer = Stream(auth=auth, listener=l)#, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     print("Tweets idioma: {0}, location: {1},  search_words: {2}, output: {3}".format('es', region, track, filename))
     print("")
