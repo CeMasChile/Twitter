@@ -172,7 +172,7 @@ def main():
     search_words = get_keywords()
 
     # Get Tweets #
-    read_tweets(config.region, search_words)
+    read_tweets(config.region_CHILE, search_words)
 
 
 if __name__ == "__main__":
