@@ -31,8 +31,8 @@ def get_KWdic(df):
 
 
 # dropdown menu
-options_dropdown = [{'label' : 'Todo', 'value' : 'All'}] + \
-                   [{'label' : key_words[i], 'value' : key_words[i]} for i in range(len(key_words[:9]))]
+options_dropdown = [{'label' : 'TODO', 'value' : 'All'}] + \
+                   [{'label' : key_words[i].upper(), 'value' : key_words[i]} for i in range(len(key_words[:9]))]
 
 dropdown_menu = dcc.Dropdown(
     id='dropdown',
@@ -63,7 +63,6 @@ figure = dcc.Graph(id='plot')
 
 texto_explicativo = 'En esta página usted tiene acceso a distintas herramientas para filtrar ' \
                     'los datos que desde el CeMAS dejamos a su disposición.'
->>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 
 # css
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -71,8 +70,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # se crea un objeto dash
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-<<<<<<< HEAD
-=======
 
 
 
@@ -88,7 +85,6 @@ def getDf2plot(direction):
     return data
 
 
->>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 # layout config
 app.layout = html.Div([
     html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
@@ -97,15 +93,12 @@ app.layout = html.Div([
     dropdown_menu,
     figure,
     # interval in milliseconds to update the figure
-<<<<<<< HEAD
     dcc.Interval(
         id='interval',
         interval=1 * 1000,  # in milliseconds
         n_intervals=0
     )
-=======
     time_interval
->>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 ])
 
 
