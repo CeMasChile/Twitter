@@ -1,15 +1,12 @@
 # coding: utf-8
 # !/usr/bin/env python
 
-import csv
 import json
-import matplotlib.pyplot as plt
-import numpy as np
-import sys
-import tweepy as tw
-
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import numpy as np
+import tweepy as tw
 
 # read keys ignoring the last char in file: \n.
 with open('./keys.txt') as f:

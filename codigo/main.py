@@ -1,8 +1,9 @@
 import csv
-import tweepy
-import pandas as pd
-import config
 
+import pandas as pd
+import tweepy
+
+import config
 
 
 def get_keywords():
@@ -53,9 +54,9 @@ def main():
                               columns=['user', "location"])
     return tweet_text
 
+
 if __name__ == '__main__':
     main()
-
 
 '''
 # drop non located tweets

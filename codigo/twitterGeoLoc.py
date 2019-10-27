@@ -2,12 +2,14 @@ import csv
 import sys
 import time
 from datetime import timedelta
+
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 
 import config
 from main import get_keywords
+from utils import extract_hash_tags
 
 
 class StreamListener(StreamListener):
@@ -21,13 +23,13 @@ class StreamListener(StreamListener):
         self.filename = 'OutputStreaming' + '_' + time.strftime('%Y%m%d-%H%M%S') + '.csv'
 
         # Create a new file with that filename
-        csvFile = open(self.filename, 'w')
+        csv_file = open(self.filename, 'w')
 
         # Create a csv writer
-        csvWriter = csv.writer(csvFile)
+        csv_writer = csv.writer(csv_file)
 
         # Write a single row with the headers of the columns
-        csvWriter.writerow(['text',
+        csv_writer.writerow(['text',
                             'created_at',
                             'geo',
                             'lang',
@@ -50,7 +52,8 @@ class StreamListener(StreamListener):
                             'retweeted',
                             'source',
                             'favorited',
-                            'retweet_count'])
+                            'retweet_count',
+                            'hash_tags'])
 
     def on_status(self, status):
         """
@@ -59,18 +62,21 @@ class StreamListener(StreamListener):
         Writes them on .txt file.
         """
         # Open the csv file created previously
-        csvFile = open(self.filename, 'a')
+        csv_file = open(self.filename, 'a')
 
         # Create a csv writer
-        csvWriter = csv.writer(csvFile)
+        csv_writer = csv.writer(csv_file)
 
         # Try to
         try:
             # On screen tweets #
+
             print(status.author.screen_name, status.created_at, status.text)
 
+            hash_tags = extract_hash_tags(status.text)
+
             # Write the tweet's information to the csv file
-            csvWriter.writerow([status.text,
+            csv_writer.writerow([status.text,
                                 status.created_at-timedelta(hours=-3),
                                 status.geo,
                                 status.lang,
@@ -93,7 +99,9 @@ class StreamListener(StreamListener):
                                 status.retweeted,
                                 status.source,
                                 status.favorited,
-                                status.retweet_count])
+                                status.retweet_count,
+                                hash_tags,
+                                ])
 
         # If some error occurs
         except Exception as e:
@@ -103,7 +111,7 @@ class StreamListener(StreamListener):
             pass
 
         # Close the csv file
-        csvFile.close()
+        csv_file.close()
 
         # Return nothing
         return
@@ -158,7 +166,8 @@ def read_tweets(region, track):
     filename = 'OutputStreaming'
 
     # INIT STREAM #
-    streamer = Stream(auth=auth, listener=l)#, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    # streamer = Stream(auth=auth, listener=l, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    streamer = Stream(auth=auth, listener=l)
 
     print("Tweets idioma: {0}, location: {1},  search_words: {2}, output: {3}".format('es', region, track, filename))
     print("")

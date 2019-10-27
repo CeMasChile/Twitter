@@ -1,7 +1,7 @@
 import glob
+import os
 
 import pandas as pd
-import os
 
 
 def csv_dataframe(filename=None):
