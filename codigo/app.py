@@ -4,6 +4,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.graph_objs as go
+<<<<<<< HEAD
+
+# direction of the css file
+direction = './OutputStreaming_20191026-153306.csv'
+=======
 from main import get_keywords
 import numpy as np
 
@@ -58,6 +63,7 @@ figure = dcc.Graph(id='plot')
 
 texto_explicativo = 'En esta página usted tiene acceso a distintas herramientas para filtrar ' \
                     'los datos que desde el CeMAS dejamos a su disposición.'
+>>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 
 # css
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -65,6 +71,8 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # se crea un objeto dash
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -80,6 +88,7 @@ def getDf2plot(direction):
     return data
 
 
+>>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 # layout config
 app.layout = html.Div([
     html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
@@ -88,7 +97,15 @@ app.layout = html.Div([
     dropdown_menu,
     figure,
     # interval in milliseconds to update the figure
+<<<<<<< HEAD
+    dcc.Interval(
+        id='interval',
+        interval=1 * 1000,  # in milliseconds
+        n_intervals=0
+    )
+=======
     time_interval
+>>>>>>> 2622aa5420a4d7ff4524466e955fa30c7af6c800
 ])
 
 
@@ -100,15 +117,12 @@ app.layout = html.Div([
 # how to update the figure
 def update_graph(n):        # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
-
-    data = getDf2plot(direction)
+    df = pd.read_csv(direction)
 
     # assign the 'created_at' column to the histogram
     data = {
-        'data': [go.Scatter(
-            x=data['date'][1:],     # se salta el primer elemento porque no es el minuto completo
-            y=data['freq'][1:],
-            mode='lines+markers'
+        'data': [go.Histogram(
+            x=df['created_at']
         )]
     }
 
