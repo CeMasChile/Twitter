@@ -14,15 +14,32 @@ latest_csv = get_latest_output()
 df = pd.read_csv(latest_csv)
 key_words = get_keywords()
 
-
-# ACÁ SE VAN A CONSTRUIR LAS PARTES DE LA APP, EN ESPECÍFICO, DE LA PARTE DE PALABRAS #
+# ============== FUNCIONES ===============
 
 def get_kw_dict(dataframe):
     '''
-    devuelve un diccionario con los índices del df que tienen la palabra
+        devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
+        ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
+
+def key_word_filter(df, kw, kwdict):
+    """
+    filtra el dataframe entregado con la palabra clave pedida usando el diccionario
+    :param df: pandas dataframe to filter
+    :param kw: keyword to look for
+    :param kwdict: dictionary with the index values for the words
+    :return: a pd dataframe with the filteres request
+    """
+    return df.iloc[kwdict[kw]]
+
+# ============== FIN FUNCIONES ===============
+
+
+
+
+# ACÁ SE VAN A CONSTRUIR LAS PARTES DE LA APP, EN ESPECÍFICO, DE LA PARTE DE PALABRAS #
 
 # dropdown menu
 options_dropdown = [{'label': 'TODO', 'value': 'All'}] + \
@@ -64,7 +81,6 @@ app.layout = html.Div([
     html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
     html.Div(texto_explicativo),
     dropdown_menu,
-
     # figure object
     figure,
     # interval in milliseconds to update the figure
