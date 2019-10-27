@@ -24,12 +24,6 @@ kws = get_keywords()
 # layout config
 app.layout = html.Div([
 
-    html.H1(children="Bienvenido a CeMas"),
-
-    html.Div(children='Estamos trackeando las siguiente keywords:' + str(kws)),
-
-    # html.Ul([html.Li(kw) for kw in kws]),
-
     # figure object
     dcc.Graph(id='hist'),
     # interval in milliseconds to update the figure
