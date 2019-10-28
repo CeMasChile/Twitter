@@ -1,7 +1,7 @@
 import csv
 import sys
 import time
-from datetime import timedelta
+from datetime import datetime
 
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -77,7 +77,7 @@ class StreamListener(StreamListener):
 
             # Write the tweet's information to the csv file
             csv_writer.writerow([status.text,
-                                status.created_at-timedelta(hours=-3),
+                                status.created_at - (datetime.now()-datetime.utcnow()),
                                 status.geo,
                                 status.lang,
                                 status.place,
