@@ -1,3 +1,5 @@
+tweepy
+pymongo
 boto==2.44.0
 chardet==2.3.0
 crcmod==1.7

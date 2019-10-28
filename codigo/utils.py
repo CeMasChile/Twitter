@@ -1,12 +1,11 @@
 import glob
-import sys
 import os
+import sys
 import time
 
-import simplejson as json
 import pandas as pd
-
-import re
+import simplejson as json
+from pymongo import MongoClient
 
 
 def today():
@@ -41,8 +40,46 @@ def combine_csv(all_files):
 
 
 def extract_hash_tags(s):
-    return set(part[1:] for part in s.split() if part.startswith('#'))
+    res = set(part[1:] for part in s.split() if part.startswith('#'))
+    if res:
+        return res
+    else:
+        return res
+
+
+def _connect_mongo(host, port, username, password, db):
+    """ A util for making a connection to mongo """
+
+    if username and password:
+        mongo_uri = 'mongodb://%s:%s@%s:%s/%s' % (username, password, host, port, db)
+        conn = MongoClient(mongo_uri)
+    else:
+        conn = MongoClient(host, port)
+
+    return conn[db]
+
+
+def read_mongo(db, collection, query={}, host='localhost', port=27017, username=None, password=None, no_id=True):
+    """ Read from Mongo and Store into DataFrame """
+
+    # Connect to MongoDB
+    db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
+
+    # Make a query to the specific DB and Collection
+    cursor = db[collection].find(query)
+
+    # Expand the cursor and construct the DataFrame
+    df = pd.DataFrame(list(cursor))
+
+    # Delete the _id
+    if no_id:
+        del df['_id']
+
+    return df
 
 
 if __name__ == '__main__':
-    print(extract_hash_tags('"I love #stackoverflow because #people are very #helpful!"'))
+    df = read_mongo('dbTweets', 'tweets_chile')
+
+
+

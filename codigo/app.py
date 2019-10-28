@@ -5,16 +5,20 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-from utils import get_latest_output
+from utils import get_latest_output, read_mongo
 from main import get_keywords
+
+
 
 # direction of the csv file
 latest_csv = get_latest_output()
 
-df = pd.read_csv(latest_csv)
+#df = pd.read_csv(latest_csv)
+
+df = read_mongo('dbTweets', 'tweets_chile')
 key_words = get_keywords()
 
-# ============== FUNCIONES ===============
+# ============== FUNCIONES =============== #
 
 def get_kw_dict(dataframe):
     '''
@@ -34,7 +38,7 @@ def key_word_filter(df, kw, kwdict):
     """
     return df.iloc[kwdict[kw]]
 
-# ============== FIN FUNCIONES ===============
+# ============== FIN FUNCIONES =============== #
 
 
 
@@ -81,21 +85,16 @@ app.layout = html.Div([
     html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
     html.Div(texto_explicativo),
     dropdown_menu,
-    # figure object
     figure,
-    # interval in milliseconds to update the figure
     time_interval
 ])
 
 
-# Dropdown
+
 @app.callback(
     Output('plot', 'figure'),  # the output is what to modify and which property
     [Input('interval', 'n_intervals')]  # input is the trigger and the property
 )
-
-
-# how to update the figure
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
 

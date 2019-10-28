@@ -10,6 +10,18 @@ from tweepy.streaming import StreamListener
 import config
 from main import get_keywords
 from utils import extract_hash_tags
+from pymongo import MongoClient
+import json
+
+csv_prompt = input("Quiere crear un .csv?: [Y/n]").lower()
+
+# Region #
+region = config.region_CHILE
+
+# Connect to mongoDB #
+client = MongoClient("127.0.0.1:27017")
+db = client.dbTweets
+coll = db['tweets_' + 'chile']
 
 
 class StreamListener(StreamListener):
@@ -19,41 +31,48 @@ class StreamListener(StreamListener):
         # That sets the api
         self.api = api
 
-        # Create a file with 'data_' and the current time
-        self.filename = 'OutputStreaming' + '_' + time.strftime('%Y%m%d-%H%M%S') + '.csv'
+        self.csv = False
 
-        # Create a new file with that filename
-        csv_file = open(self.filename, 'w')
+        if csv_prompt == "y":
+            self.csv = True
 
-        # Create a csv writer
-        csv_writer = csv.writer(csv_file)
+        if self.csv:
+            # Create a file with 'data_' and the current time
+            self.filename = 'OutputStreaming' + '_' + time.strftime('%Y%m%d-%H%M%S') + '.csv'
+            print("Se crea el csv " + self.filename)
 
-        # Write a single row with the headers of the columns
-        csv_writer.writerow(['text',
-                            'created_at',
-                            'geo',
-                            'lang',
-                            'place',
-                            'user.favourites_count',
-                            'user.statuses_count',
-                            'user.description',
-                            'user.location',
-                            'user.id',
-                            'user.created_at',
-                            'user.verified',
-                            'user.url',
-                            'user.listed_count',
-                            'user.friends_count',
-                            'user.name',
-                            'user.screen_name',
-                            'user.geo_enabled',
-                            'id',
-                            'favorite_count',
-                            'retweeted',
-                            'source',
-                            'favorited',
-                            'retweet_count',
-                            'hash_tags'])
+            # Create a new file with that filename
+            csv_file = open(self.filename, 'w')
+
+            # Create a csv writer
+            csv_writer = csv.writer(csv_file)
+
+            # Write a single row with the headers of the columns
+            csv_writer.writerow(['text',
+                                 'created_at',
+                                 'geo',
+                                 'lang',
+                                 'place',
+                                 'user.favourites_count',
+                                 'user.statuses_count',
+                                 'user.description',
+                                 'user.location',
+                                 'user.id',
+                                 'user.created_at',
+                                 'user.verified',
+                                 'user.url',
+                                 'user.listed_count',
+                                 'user.friends_count',
+                                 'user.name',
+                                 'user.screen_name',
+                                 'user.geo_enabled',
+                                 'id',
+                                 'favorite_count',
+                                 'retweeted',
+                                 'source',
+                                 'favorited',
+                                 'retweet_count',
+                                 'hash_tags'])
 
     def on_status(self, status):
         """
@@ -61,47 +80,60 @@ class StreamListener(StreamListener):
         Prints them on screen.
         Writes them on .txt file.
         """
-        # Open the csv file created previously
-        csv_file = open(self.filename, 'a')
 
-        # Create a csv writer
-        csv_writer = csv.writer(csv_file)
+        global csv_writer, csv_file
+        if self.csv:
+            # Open the csv file created previously
+            csv_file = open(self.filename, 'a')
+            # Create a csv writer
+            csv_writer = csv.writer(csv_file)
 
         # Try to
         try:
             # On screen tweets #
-
-            print(status.author.screen_name, status.created_at, status.text)
+            # print(status.author.screen_name, status.created_at, status.text)
 
             hash_tags = extract_hash_tags(status.text)
 
-            # Write the tweet's information to the csv file
-            csv_writer.writerow([status.text,
-                                status.created_at-timedelta(hours=-3),
-                                status.geo,
-                                status.lang,
-                                status.place,
-                                status.user.favourites_count,
-                                status.user.statuses_count,
-                                status.user.description,
-                                status.user.location,
-                                status.user.id,
-                                status.user.created_at,
-                                status.user.verified,
-                                status.user.url,
-                                status.user.listed_count,
-                                status.user.friends_count,
-                                status.user.name,
-                                status.user.screen_name,
-                                status.user.geo_enabled,
-                                status.id,
-                                status.favorite_count,
-                                status.retweeted,
-                                status.source,
-                                status.favorited,
-                                status.retweet_count,
-                                hash_tags,
-                                ])
+            if self.csv:
+                # Write the tweet's information to the csv file
+                csv_writer.writerow([status.text,
+                                     status.created_at - timedelta(hours=-3),
+                                     status.geo,
+                                     status.lang,
+                                     status.place,
+                                     status.user.favourites_count,
+                                     status.user.statuses_count,
+                                     status.user.description,
+                                     status.user.location,
+                                     status.user.id,
+                                     status.user.created_at,
+                                     status.user.verified,
+                                     status.user.url,
+                                     status.user.listed_count,
+                                     status.user.friends_count,
+                                     status.user.name,
+                                     status.user.screen_name,
+                                     status.user.geo_enabled,
+                                     status.id,
+                                     status.favorite_count,
+                                     status.retweeted,
+                                     status.source,
+                                     status.favorited,
+                                     status.retweet_count,
+                                     hash_tags,
+                                     ])
+
+            # Add hashtags to JSON #
+            json_str = json.dumps(status._json)
+            json_obj = json.loads(json_str)
+
+            json_obj['hash_tags'] = list(hash_tags)
+
+            json_str = json.JSONEncoder().encode(json_obj)
+
+            # Insert to db #
+            coll.insert(json_obj)
 
         # If some error occurs
         except Exception as e:
@@ -110,13 +142,12 @@ class StreamListener(StreamListener):
             # and continue
             pass
 
-        # Close the csv file
-        csv_file.close()
+        if self.csv:
+            # Close the csv file
+            csv_file.close()
 
         # Return nothing
         return
-
-
 
     def on_error(self, status_code):
         # Print the error code
@@ -181,7 +212,7 @@ def main():
     search_words = get_keywords()
 
     # Get Tweets #
-    read_tweets(config.region_CHILE, search_words)
+    read_tweets(region, search_words)
 
 
 if __name__ == "__main__":
