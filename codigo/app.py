@@ -13,7 +13,7 @@ latest_csv = get_latest_output()
 
 # df = pd.read_csv(latest_csv)
 
-df = read_mongo('dbTweets', 'tweets_chile')
+
 key_words = get_keywords()
 
 
@@ -38,9 +38,10 @@ def key_word_filter(df, kw, kwdict):
     return df.iloc[kwdict[kw]]
 
 
-def getDf2plot(filename):
-    # se lee el archivo con los datos
-    df = pd.read_csv(filename)
+def getDf2plot():
+    df = read_mongo('dbTweets', 'tweets_chile')
+
+
     # de trunca a los minutos
     DF = pd.to_datetime(df['created_at']).dt.floor('min')
     # se encuentra la fecha más reciente y eso no se grafíca porque quedaría incompleto ya que ese minuto no ha terminado
@@ -113,7 +114,7 @@ app.layout = html.Div([
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
 
-    data = getDf2plot(latest_csv)
+    data = getDf2plot()
 
     # assign the 'created_at' column to the histogram
     data = {

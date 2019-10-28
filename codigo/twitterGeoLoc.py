@@ -95,11 +95,10 @@ class StreamListener(StreamListener):
 
             hash_tags = extract_hash_tags(status.text)
 
-
             if self.csv:
                 # Write the tweet's information to the csv file
                 csv_writer.writerow([status.text,
-                                     status.created_at - timedelta(hours=-3),
+                                     status.created_at - (datetime.now() - datetime.utcnow()),
                                      status.geo,
                                      status.lang,
                                      status.place,
@@ -130,6 +129,7 @@ class StreamListener(StreamListener):
             json_obj = json.loads(json_str)
 
             json_obj['hash_tags'] = list(hash_tags)
+            json_obj['created_at'] = str(status.created_at - (datetime.now() - datetime.utcnow()))
 
             json_str = json.JSONEncoder().encode(json_obj)
 
