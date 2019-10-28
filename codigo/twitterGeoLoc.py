@@ -1,7 +1,7 @@
 import csv
 import sys
 import time
-from datetime import timedelta
+from datetime import datetime
 
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -94,6 +94,7 @@ class StreamListener(StreamListener):
             # print(status.author.screen_name, status.created_at, status.text)
 
             hash_tags = extract_hash_tags(status.text)
+
 
             if self.csv:
                 # Write the tweet's information to the csv file
