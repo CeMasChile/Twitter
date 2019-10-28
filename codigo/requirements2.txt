@@ -1,0 +1,8 @@
+pandas
+dash
+plotly
+jupyter
+pymongo
+simplejson
+tweepy
+wordcloud

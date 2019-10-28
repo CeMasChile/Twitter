@@ -134,7 +134,7 @@ class StreamListener(StreamListener):
             json_str = json.JSONEncoder().encode(json_obj)
 
             # Insert to db #
-            coll.insert(json_obj)
+            coll.insert_many(json_obj)
 
         # If some error occurs
         except Exception as e:
