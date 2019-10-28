@@ -34,6 +34,23 @@ def key_word_filter(df, kw, kwdict):
     """
     return df.iloc[kwdict[kw]]
 
+def getDf2plot(filename):
+    # se lee el archivo con los datos
+    df = pd.read_csv(filename)
+    # de trunca a los minutos
+    DF = pd.to_datetime(df['created_at']).dt.floor('min')
+    # se encuentra la fecha más reciente y eso no se grafíca porque quedaría incompleto ya que ese minuto no ha terminado
+    max_date = DF.max()
+    DF = pd.to_datetime(DF.loc[DF < max_date])
+    # dataframe con frecuencia para las fechas
+    DF = DF.sort_index().value_counts()
+    # se asignan los nombres de las columnas
+    data = {'date': DF.index, 'freq': DF.values}
+    # se ordena el dataframe
+    data = pd.DataFrame(data).sort_values('date')
+    # de devuelve el dataframe listo para plotear y ordenaito
+    # ojo, acá están contados los tweets por minuto y se van graficando
+    return data
 # ============== FIN FUNCIONES ===============
 
 
@@ -113,18 +130,6 @@ def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si n
     return go.Figure(data)  # returns the figure to be updated
 
 
-def getDf2plot(filename):
-    df = pd.read_csv(filename)
-
-    DF = pd.to_datetime(df['created_at']).dt.floor('min')
-
-    max_date = DF.max()
-    DF = pd.to_datetime(DF.loc[DF < max_date])
-    DF = DF.sort_index().value_counts()
-
-    data = {'date': DF.index, 'freq': DF.values}
-    data = pd.DataFrame(data).sort_values('date')
-    return data
 
 
 if __name__ == '__main__':
