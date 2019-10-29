@@ -49,7 +49,7 @@ def get_kw_dict(dataframe):
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
 
-def count_per_minute(df, column='created_at'):
+def tweets_per_minute(df, column='created_at'):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
@@ -83,29 +83,7 @@ def key_word_filter(df, kw, kwdict):
     return df.iloc[kwdict[kw]]
 
 
-def tweets_per_minute():
-    df = read_mongo('dbTweets', 'tweets_chile')
 
-    # Particion de minuto de creacion de tweet
-    df_minutos = pd.to_datetime(df['created_at']).dt.floor('min')
-
-    # Obtiene el último minuto (ie el maximo). Es un 'supremo'
-    max_date = df_minutos.max()
-
-    # Hasta el ultimo minuto
-    df_minutos = pd.to_datetime(df_minutos.loc[df_minutos < max_date]).dt.floor('min')
-
-    # Se obtiene frecuencias por minuto
-    frecuencias = df_minutos.sort_index().value_counts()
-
-    # Diccionario
-    data = {'date': frecuencias.index, 'freq': frecuencias.values}
-
-    # Se ordena en un dataframe
-    data = pd.DataFrame(data).sort_values('date')
-
-    # Están contados los tweets por minuto para que se grafiquen
-    return data
 
 
 
@@ -198,14 +176,14 @@ app.layout = html.Div([
 # how to update the figure
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
-
-    data = tweets_per_minute()
+    data = get_time_text(latest_csv)
+    data = tweets_per_minute(data)
 
     # assign the 'created_at' column to the histogram
     data = {
         'data': [go.Scatter(
-            x=data['date'][1:],  # se salta el primer elemento porque no es el minuto completo
-            y=data['freq'][1:],
+            x=data.index,  # se salta el primer elemento porque no es el minuto completo
+            y=data['created_at'].values,
             mode='lines+markers'
         )]
     }
