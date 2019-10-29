@@ -9,7 +9,6 @@ from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-
 from utils import get_latest_output, read_mongo
 from main import get_keywords
 
@@ -55,8 +54,9 @@ def tweets_per_minute(df, column='created_at'):
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
     df[column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
-    DF = pd.DataFrame(df['created_at'].value_counts()).sort_index()
-    return DF.iloc[1:-1]
+
+    frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index()
+    return frecuencia_tweets.iloc[1:-1]
 
 
 def get_users_dict(dataframe, users):
@@ -65,10 +65,8 @@ def get_users_dict(dataframe, users):
     '''
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
 
+
 # =========================================== FIN FUNCIONES NUEVAS=================================
-
-
-
 
 
 def key_word_filter(df, kw, kwdict):
@@ -82,10 +80,6 @@ def key_word_filter(df, kw, kwdict):
     return df.iloc[kwdict[kw]]
 
 
-
-
-
-
 def get_word_frequency(dataframe, wordlist):
     """
     Count how many tweets contain a given word
@@ -97,11 +91,12 @@ def get_word_frequency(dataframe, wordlist):
     word_freq = dict()
     for word in wordlist:
         word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
-    
+
     return word_freq
 
+
 def create_wordcloud_raster(dataframe, wordlist,
-                            wc_kwargs=dict(background_color='white', colormap='plasma', width= 1200, height=800)):
+                            wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
     """
     Generate a wordcloud of the keywords given, wheighted by the number of 
     unique tweets they appear in. Returns a go.Figure() instance.
@@ -112,13 +107,13 @@ def create_wordcloud_raster(dataframe, wordlist,
     :param wc_kwargs: dict of keyword arguments to give to the WordCloud
     constructor.
     """
-    
+
     # Build the word cloud from the data
     wf = get_word_frequency(dataframe, wordlist)
     word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
-    
+
     wc_raster = Image.fromarray(word_cloud.to_array())
-    
+
     # Call the constructor of Figure object
     fig = go.Figure()
 
@@ -166,16 +161,14 @@ def create_wordcloud_raster(dataframe, wordlist,
             source=wc_raster)]
     )
 
-
     # Configure other layout
     fig.update_layout(
         width=img_width * scale_factor,
         height=img_height * scale_factor,
         margin={"l": 0, "r": 0, "t": 0, "b": 0},
     )
-    
+
     return fig
- 
 
 
 # ============== FIN FUNCIONES =============== #
