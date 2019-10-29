@@ -54,15 +54,14 @@ def tweets_per_minute(df, column='created_at'):
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    df[column] = pd.to_datetime(data[column]).dt.floor('min')
-    DF = pd.DataFrame(data['created_at'].value_counts()).sort_index()
+    df[column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
+    DF = pd.DataFrame(df['created_at'].value_counts()).sort_index()
     return DF.iloc[1:-1]
 
 
 def get_users_dict(dataframe, users):
     '''
-    devuelve un diccionario con los índices del df que
-    contienen cada usuario, se dan en una lista
+    devuelve un diccionario con los índices del df que contienen cada usuario, se dan en una lista
     '''
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
 
@@ -171,19 +170,16 @@ app.layout = html.Div([
     Output('plot', 'figure'),  # the output is what to modify and which property
     [Input('interval', 'n_intervals')]  # input is the trigger and the property
 )
-
-
-# how to update the figure
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
-    # update a pandas DataFrame
-    data = get_time_text(latest_csv)
-    data = tweets_per_minute(data)
+    # Read data from db
+    data = read_mongo('dbTweets', 'tweets_chile')
+    tweets_minute = tweets_per_minute(data)
 
     # assign the 'created_at' column to the histogram
     data = {
         'data': [go.Scatter(
-            x=data.index,  # se salta el primer elemento porque no es el minuto completo
-            y=data['created_at'].values,
+            x=tweets_minute.index,  # se salta el primer elemento porque no es el minuto completo
+            y=tweets_minute['created_at'].values,
             mode='lines+markers'
         )]
     }
