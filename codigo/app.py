@@ -38,7 +38,7 @@ def key_word_filter(df, kw, kwdict):
     return df.iloc[kwdict[kw]]
 
 
-def getDf2plot():
+def tweets_per_minute():
     df = read_mongo('dbTweets', 'tweets_chile')
 
     # Particion de minuto de creacion de tweet
@@ -119,7 +119,7 @@ app.layout = html.Div([
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
 
-    data = getDf2plot()
+    data = tweets_per_minute()
 
     # assign the 'created_at' column to the histogram
     data = {
