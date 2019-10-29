@@ -74,7 +74,7 @@ def get_word_frequency(dataframe, wordlist):
     """
     word_freq = dict()
     for word in wordlist:
-        word_freq[word] = np.where(df['text'].str.contains(word))[0].size
+        word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
     
     return word_freq
 
