@@ -9,6 +9,7 @@ from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
+
 from utils import get_latest_output, read_mongo
 from main import get_keywords
 
@@ -82,19 +83,7 @@ def key_word_filter(df, kw, kwdict):
     return df.iloc[kwdict[kw]]
 
 
-<<<<<<< HEAD
-def tweets_per_minute():
-    '''
-    Generates a dataframe with the tweets per minute from a given df
 
-    :return dataframe: Number of tweets per minute
-    '''
-    df = read_mongo('dbTweets', 'tweets_chile')
-||||||| merged common ancestors
-def tweets_per_minute():
-    df = read_mongo('dbTweets', 'tweets_chile')
-=======
->>>>>>> d942e44e532af4ab49136df3fcbf6882fa9d1198
 
 
 
@@ -109,7 +98,7 @@ def get_word_frequency(dataframe, wordlist):
     word_freq = dict()
     for word in wordlist:
         word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
-
+    
     return word_freq
 
 def create_wordcloud_raster(dataframe, wordlist,
