@@ -49,12 +49,12 @@ def get_kw_dict(dataframe):
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
 
-def count_per_minute(df, column):
+def count_per_minute(df, column='created_at'):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    max_date = df[column].max()
+    df[column] = pd.to_datetime(data[column]).dt.floor('min')
     DF = pd.DataFrame(data['created_at'].value_counts()).sort_index()
     return DF.iloc[1:-1]
 
