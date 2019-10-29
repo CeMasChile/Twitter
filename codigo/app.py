@@ -33,13 +33,11 @@ def get_users(direction):
     '''
     return pd.read_csv(direction, usecols=['user.screen_name'])
 
-
 def get_time_text(direction):
     '''
     devuelve un df solo con la columna de horas y texto para cargar más rápido
     '''
     pd.read_csv(direction, usecols=['created_at', 'text'])
-
 
 def get_kw_dict(dataframe):
     '''
@@ -47,7 +45,6 @@ def get_kw_dict(dataframe):
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
-
 
 def tweets_per_minute(df, column='created_at'):
     '''
@@ -58,34 +55,12 @@ def tweets_per_minute(df, column='created_at'):
     DF = pd.DataFrame(data['created_at'].value_counts()).sort_index()
     return DF.iloc[1:-1]
 
-
 def get_users_dict(dataframe, users):
     '''
     devuelve un diccionario con los índices del df que
     contienen cada usuario, se dan en una lista
     '''
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
-
-# =========================================== FIN FUNCIONES NUEVAS=================================
-
-
-
-
-
-def key_word_filter(df, kw, kwdict):
-    """
-    filtra el dataframe entregado con la palabra clave pedida usando el diccionario
-    :param df: pandas dataframe to filter
-    :param kw: keyword to look for
-    :param kwdict: dictionary with the index values for the words
-    :return: a pd dataframe with the filteres request
-    """
-    return df.iloc[kwdict[kw]]
-
-
-
-
-
 
 def get_word_frequency(dataframe, wordlist):
     """
@@ -101,7 +76,6 @@ def get_word_frequency(dataframe, wordlist):
     
     return word_freq
 
-
 def create_wordcloud_raster(dataframe, wordlist,
                             wc_kwargs=dict(background_color='white', colormap='plasma', width= 1200, height=800)):
     """
@@ -116,7 +90,6 @@ def create_wordcloud_raster(dataframe, wordlist,
     wf = get_word_frequency(dataframe, wordlist)
     word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
     return Image.fromarray(word_cloud.to_array())
-
 
 # ============== FIN FUNCIONES =============== #
 
