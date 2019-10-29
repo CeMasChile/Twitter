@@ -2,21 +2,19 @@ import csv
 
 import pandas as pd
 import tweepy
-
+import io
 import config
 
 
 def get_keywords():
-    # Abrimos las keywords en una lista de python
-    with open('./kw.csv', 'r') as f:
-        reader = csv.reader(f)
-        keywords = list(reader)[0]
+    """
+    Returns a Python list of strings read from the file kw.csv'
+    """
+    # Abrimos las keywords como string
+    keywordfile = io.open('./kw.csv').read()
 
-    # limpiamos los espacios
-    for i in range(len(keywords)):
-        if keywords[i][0] == ' ':
-            keywords[i] = keywords[i][1::]
-
+    #Convertimos a lista de Python
+    keywords = keywordfile.split(', ')
     return keywords
 
 

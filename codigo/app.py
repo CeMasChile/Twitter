@@ -2,8 +2,13 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
+import numpy as np
+import io
+from wordcloud import WordCloud
+from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
+
 
 from utils import get_latest_output, read_mongo
 from main import get_keywords
@@ -56,6 +61,38 @@ def getDf2plot():
     # de devuelve el dataframe listo para plotear y ordenaito
     # ojo, acá están contados los tweets por minuto y se van graficando
     return data
+
+
+
+def get_word_frequency(dataframe, wordlist):
+    """
+    Count how many tweets contain a given word
+    :param dataframe: Pandas dataframe from the tweepy mining
+    :param wordlist: array-like with the keywords
+    
+    TODO: - drop dependency on numpy?
+    """
+    word_freq = dict()
+    for word in wordlist:
+        word_freq[word] = np.where(df['text'].str.contains(word))[0].size
+    
+    return word_freq
+
+
+def create_wordcloud_raster(dataframe, wordlist,
+                            wc_kwargs=dict(background_color='white', colormap='plasma', width= 1200, height=800)):
+    """
+    Generate a wordcloud of the keywords given, wheighted by the number of 
+    unique tweets they appear in.
+    :param dataframe: Pandas DataFrame object. It must contain a 'text' column with the
+    tweets from the stream.
+    :param wordlist: list of strings to plot in the word cloud.
+    :param wc_kwargs: dict of keyword arguments to give to the WordCloud
+    constructor.
+    """
+    wf = get_word_frequency(dataframe, wordlist)
+    word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
+    return Image.fromarray(word_cloud.to_array())
 
 
 # ============== FIN FUNCIONES =============== #
