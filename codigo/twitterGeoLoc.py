@@ -42,13 +42,13 @@ class StreamListener(StreamListener):
             print("Se crea el csv " + self.filename)
 
             # Create a new file with that filename
-            csv_file = open(self.filename, 'w')
+            file = open(self.filename, 'w')
 
             # Create a csv writer
-            csv_writer = csv.writer(csv_file)
+            writer = csv.writer(file)
 
             # Write a single row with the headers of the columns
-            csv_writer.writerow(['text',
+            writer.writerow(['text',
                                  'created_at',
                                  'geo',
                                  'lang',
@@ -59,20 +59,20 @@ class StreamListener(StreamListener):
                                  'user.location',
                                  'user.id',
                                  'user.created_at',
-                                 'user.verified',
-                                 'user.url',
-                                 'user.listed_count',
-                                 'user.friends_count',
-                                 'user.name',
-                                 'user.screen_name',
-                                 'user.geo_enabled',
-                                 'id',
-                                 'favorite_count',
-                                 'retweeted',
-                                 'source',
-                                 'favorited',
-                                 'retweet_count',
-                                 'hash_tags'])
+                                'user.verified',
+                                'user.url',
+                                'user.listed_count',
+                                'user.friends_count',
+                                'user.name',
+                                'user.screen_name',
+                                'user.geo_enabled',
+                                'id',
+                                'favorite_count',
+                                'retweeted',
+                                'source',
+                                'favorited',
+                                'retweet_count',
+                                'hash_tags'])
 
     def on_status(self, status):
         """
@@ -81,12 +81,12 @@ class StreamListener(StreamListener):
         Writes them on .txt file.
         """
 
-        global csv_writer, csv_file
+        global writer, file
         if self.csv:
             # Open the csv file created previously
-            csv_file = open(self.filename, 'a')
+            file = open(self.filename, 'a')
             # Create a csv writer
-            csv_writer = csv.writer(csv_file)
+            writer = csv.writer(file)
 
         # Try to
         try:
@@ -96,32 +96,33 @@ class StreamListener(StreamListener):
             hash_tags = extract_hash_tags(status.text)
 
             # Write the tweet's information to the csv file
-            csv_writer.writerow([status.text,
-                                status.created_at - (datetime.now()-datetime.utcnow()),
-                                status.geo,
-                                status.lang,
-                                status.place,
-                                status.user.favourites_count,
-                                status.user.statuses_count,
-                                status.user.description,
-                                status.user.location,
-                                status.user.id,
-                                status.user.created_at,
-                                status.user.verified,
-                                status.user.url,
-                                status.user.listed_count,
-                                status.user.friends_count,
-                                status.user.name,
-                                status.user.screen_name,
-                                status.user.geo_enabled,
-                                status.id,
-                                status.favorite_count,
-                                status.retweeted,
-                                status.source,
-                                status.favorited,
-                                status.retweet_count,
-                                hash_tags,
-                                ])
+            if self.csv:
+                writer.writerow([status.text,
+                                     status.created_at - (datetime.now() - datetime.utcnow()),
+                                     status.geo,
+                                     status.lang,
+                                     status.place,
+                                     status.user.favourites_count,
+                                     status.user.statuses_count,
+                                     status.user.description,
+                                     status.user.location,
+                                     status.user.id,
+                                     status.user.created_at,
+                                     status.user.verified,
+                                     status.user.url,
+                                     status.user.listed_count,
+                                     status.user.friends_count,
+                                     status.user.name,
+                                     status.user.screen_name,
+                                     status.user.geo_enabled,
+                                     status.id,
+                                     status.favorite_count,
+                                     status.retweeted,
+                                     status.source,
+                                     status.favorited,
+                                     status.retweet_count,
+                                     hash_tags,
+                                     ])
 
             # Add hashtags to JSON #
             json_str = json.dumps(status._json)
@@ -144,7 +145,7 @@ class StreamListener(StreamListener):
 
         if self.csv:
             # Close the csv file
-            csv_file.close()
+            file.close()
 
         # Return nothing
         return
