@@ -23,12 +23,52 @@ key_words = get_keywords()
 
 # ============== FUNCIONES =============== #
 
+# ===========================================FUNCIONES NUEVAS=================================
+
+
+def get_users(direction):
+    '''
+    devuelve un df solo con la columna de usuarios para cargar más rápido
+    '''
+    return pd.read_csv(direction, usecols=['user.screen_name'])
+
+
+def get_time_text(direction):
+    '''
+    devuelve un df solo con la columna de horas y texto para cargar más rápido
+    '''
+    pd.read_csv(direction, usecols=['created_at', 'text'])
+
+
 def get_kw_dict(dataframe):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
+
+
+def count_per_minute(df, column='created_at'):
+    '''
+    funcion que nos dice el nro de veces que aparece una determinada fecha
+    en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
+    '''
+    df[column] = pd.to_datetime(data[column]).dt.floor('min')
+    DF = pd.DataFrame(data['created_at'].value_counts()).sort_index()
+    return DF.iloc[1:-1]
+
+
+def get_users_dict(dataframe, users):
+    '''
+    devuelve un diccionario con los índices del df que
+    contienen cada usuario, se dan en una lista
+    '''
+    return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
+
+# =========================================== FIN FUNCIONES NUEVAS=================================
+
+
+
 
 
 def key_word_filter(df, kw, kwdict):
@@ -156,6 +196,9 @@ app.layout = html.Div([
     Output('plot', 'figure'),  # the output is what to modify and which property
     [Input('interval', 'n_intervals')]  # input is the trigger and the property
 )
+
+
+# how to update the figure
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     # update a pandas DataFrame
 

@@ -95,34 +95,33 @@ class StreamListener(StreamListener):
 
             hash_tags = extract_hash_tags(status.text)
 
-            if self.csv:
-                # Write the tweet's information to the csv file
-                csv_writer.writerow([status.text,
-                                     status.created_at - (datetime.now() - datetime.utcnow()),
-                                     status.geo,
-                                     status.lang,
-                                     status.place,
-                                     status.user.favourites_count,
-                                     status.user.statuses_count,
-                                     status.user.description,
-                                     status.user.location,
-                                     status.user.id,
-                                     status.user.created_at,
-                                     status.user.verified,
-                                     status.user.url,
-                                     status.user.listed_count,
-                                     status.user.friends_count,
-                                     status.user.name,
-                                     status.user.screen_name,
-                                     status.user.geo_enabled,
-                                     status.id,
-                                     status.favorite_count,
-                                     status.retweeted,
-                                     status.source,
-                                     status.favorited,
-                                     status.retweet_count,
-                                     hash_tags,
-                                     ])
+            # Write the tweet's information to the csv file
+            csv_writer.writerow([status.text,
+                                status.created_at - (datetime.now()-datetime.utcnow()),
+                                status.geo,
+                                status.lang,
+                                status.place,
+                                status.user.favourites_count,
+                                status.user.statuses_count,
+                                status.user.description,
+                                status.user.location,
+                                status.user.id,
+                                status.user.created_at,
+                                status.user.verified,
+                                status.user.url,
+                                status.user.listed_count,
+                                status.user.friends_count,
+                                status.user.name,
+                                status.user.screen_name,
+                                status.user.geo_enabled,
+                                status.id,
+                                status.favorite_count,
+                                status.retweeted,
+                                status.source,
+                                status.favorited,
+                                status.retweet_count,
+                                hash_tags,
+                                ])
 
             # Add hashtags to JSON #
             json_str = json.dumps(status._json)
@@ -213,7 +212,7 @@ def main():
     search_words = get_keywords()
 
     # Get Tweets #
-    read_tweets(region, search_words)
+    read_tweets(config.region_CHILE, search_words)
 
 
 if __name__ == "__main__":
