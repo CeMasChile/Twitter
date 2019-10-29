@@ -98,7 +98,7 @@ class StreamListener(StreamListener):
             # Write the tweet's information to the csv file
             if self.csv:
                 writer.writerow([status.text,
-                                     status.created_at - (datetime.now() - datetime.utcnow()),
+                                     status.created_at + (datetime.now() - datetime.utcnow()),
                                      status.geo,
                                      status.lang,
                                      status.place,
