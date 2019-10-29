@@ -41,20 +41,25 @@ def key_word_filter(df, kw, kwdict):
 def getDf2plot():
     df = read_mongo('dbTweets', 'tweets_chile')
 
+    # Particion de minuto de creacion de tweet
+    df_minutos = pd.to_datetime(df['created_at']).dt.floor('min')
 
-    # de trunca a los minutos
-    DF = pd.to_datetime(df['created_at']).dt.floor('min')
-    # se encuentra la fecha más reciente y eso no se grafíca porque quedaría incompleto ya que ese minuto no ha terminado
-    max_date = DF.max()
-    DF = pd.to_datetime(DF.loc[DF < max_date])
-    # dataframe con frecuencia para las fechas
-    DF = DF.sort_index().value_counts()
-    # se asignan los nombres de las columnas
-    data = {'date': DF.index, 'freq': DF.values}
-    # se ordena el dataframe
+    # Obtiene el último minuto (ie el maximo). Es un 'supremo'
+    max_date = df_minutos.max()
+
+    # Hasta el ultimo minuto
+    df_minutos = pd.to_datetime(df_minutos.loc[df_minutos < max_date]).dt.floor('min')
+
+    # Se obtiene frecuencias por minuto
+    frecuencias = df_minutos.sort_index().value_counts()
+
+    # Diccionario
+    data = {'date': frecuencias.index, 'freq': frecuencias.values}
+
+    # Se ordena en un dataframe
     data = pd.DataFrame(data).sort_values('date')
-    # de devuelve el dataframe listo para plotear y ordenaito
-    # ojo, acá están contados los tweets por minuto y se van graficando
+
+    # Están contados los tweets por minuto para que se grafiquen
     return data
 
 

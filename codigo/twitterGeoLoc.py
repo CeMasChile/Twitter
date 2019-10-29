@@ -131,7 +131,7 @@ class StreamListener(StreamListener):
             json_obj['hash_tags'] = list(hash_tags)
             json_obj['created_at'] = str(status.created_at - (datetime.now() - datetime.utcnow()))
 
-            json_str = json.JSONEncoder().encode(json_obj)
+            # json_str = json.JSONEncoder().encode(json_obj)
 
             # Insert to db #
             coll.insert_many(json_obj)
