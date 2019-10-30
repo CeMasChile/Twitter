@@ -14,6 +14,8 @@ from pymongo import MongoClient
 import json
 
 csv_prompt = input("Quiere crear un .csv?: [Y/n]").lower()
+if(csv_prompt == ""):
+    csv_prompt = "y"
 
 # Region #
 region = config.region_CHILE

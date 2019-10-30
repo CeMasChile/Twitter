@@ -13,7 +13,7 @@ from utils import get_latest_output, read_mongo
 from main import get_keywords
 
 # direction of the csv file
-latest_csv = get_latest_output()
+#latest_csv = get_latest_output()
 
 # df = pd.read_csv(latest_csv)
 
@@ -225,9 +225,14 @@ app.layout = html.Div([
     [Input('interval', 'n_intervals')]  # input is the trigger and the property
 )
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+    global pandas_kw_dict
     # Read data from db
     data = read_mongo('dbTweets', 'tweets_chile')
     tweets_minute = tweets_per_minute(data)
+    # get the indexes of the keywords
+    kw_dict = get_kw_dict(data)
+    # dictionary of dfs
+    pandas_kw_dict = {element:data.iloc(kw_dict[element]) for element in kw_dict}
 
     # assign the 'created_at' column to the histogram
     data = {
