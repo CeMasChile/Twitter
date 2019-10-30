@@ -18,10 +18,13 @@ from main import get_keywords
 
 # df = pd.read_csv(latest_csv)
 
-key_words = get_keywords()
+key_words = get_keywords()[:9]
 
 
 # ============== FUNCIONES =============== #
+
+
+
 
 # ===========================================FUNCIONES NUEVAS=================================
 
@@ -40,12 +43,12 @@ def get_time_text(direction):
     pd.read_csv(direction, usecols=['created_at', 'text'])
 
 
-def get_kw_dict(df):
+def get_kw_dict(dataframe):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {kw: df[df['text'].str.contains(kw)].index for kw in key_words}
+    return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
 
 def tweets_per_minute(df, column='created_at'):
@@ -53,7 +56,7 @@ def tweets_per_minute(df, column='created_at'):
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    df[column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
+    df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
 
     frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index()
     return frecuencia_tweets.iloc[1:-1]
@@ -64,6 +67,20 @@ def get_users_dict(dataframe, users):
     devuelve un diccionario con los índices del df que contienen cada usuario, se dan en una lista
     '''
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
+
+
+
+def get_pandas_dict(df,key_words):
+    kwdic = get_kw_dict(df)
+    DD={word:df.iloc[kwdic[word]] for word in key_words}
+    DD['All'] = df
+    return DD
+
+def tpm_kw(df, key_words):
+    pandas_dict=get_pandas_dict(df, key_words)
+    DTime = {key:tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
+    DTime = {key:DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
+    return DTime
 
 
 # =========================================== FIN FUNCIONES NUEVAS=================================
@@ -176,22 +193,11 @@ def create_wordcloud_raster(dataframe, wordlist,
 
 # ACÁ SE VAN A CONSTRUIR LAS PARTES DE LA APP, EN ESPECÍFICO, DE LA PARTE DE PALABRAS #
 
-# dropdown menu
-options_dropdown = [{'label': 'TODO', 'value': 'All'}] + \
-                   [{'label': key_words[i].upper(), 'value': key_words[i]} for i in range(len(key_words[:9]))]
-
-dropdown_menu = dcc.Dropdown(
-    id='dropdown',
-    options=options_dropdown,
-    value='All',
-    multi=True,
-    placeholder="Seleccione las palabras clave"
-)
 
 #  time inteval
 time_interval = dcc.Interval(
     id='interval',
-    interval=30 * 1 * 1000,  # in milliseconds
+    interval=60 * 1 * 1000,  # in milliseconds
     n_intervals=0
 )
 
@@ -215,7 +221,6 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = html.Div([
     html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
     html.Div(texto_explicativo),
-    dropdown_menu,
     figure,
     html.Div(figure_wc, style={'textAlign':'center'}),
     time_interval
@@ -223,37 +228,32 @@ app.layout = html.Div([
 
 
 @app.callback(
-    Output('plot', 'figure'),
-    [Input('interval', 'n_intervals')]
+    Output('plot', 'figure'),  # the output is what to modify and which property
+    [Input('interval', 'n_intervals')]  # input is the trigger and the property
 )
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+    # Read data from db
     data = read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1})
 
-    tweets_minute = tweets_per_minute(data)
-    if(len(tweets_minute) > 1):  # Needs at least 2
-        # assign the 'created_at' column to the histogram
-        data = {
-            'data': [go.Scatter(
-                x=tweets_minute[1:].index,  # se salta el primer elemento porque no es el minuto completo
-                y=tweets_minute[1:]['created_at'].values,
-                mode='lines+markers'
-            )]
-        }
-    else:
-        data = {}
+    tweets_minute = tpm_kw(data, key_words)
+    # get the indexes of the keywords
+    # kw_dict = get_kw_dict(data)
+    # dictionary of dfs
+    # pandas_kw_dict = {element:data.iloc[kw_dict[element]] for element in kw_dict}
 
-    fig = go.Figure(data)
+    # assign the 'created_at' column to the histogram
 
-    fig.update_layout(
-        title="Tweets por Minuto en Chile"
-    )
+    traces = [go.Scatter(x=tweets_minute[key].index,
+                         y=tweets_minute[key]['created_at'].values,
+                         mode='lines+markers',
+                         text=key,
+                         name = key)
+              for key in key_words+['All']]
 
-    fig.update_xaxes(
-        range=[datetime.now()-timedelta(hours=5), datetime.now()]
-    )
-
-    return fig
-
+    data = {
+        'data': traces
+    }
+    return go.Figure(data)
 
 @app.callback(
     Output('word-cloud', 'figure'),
