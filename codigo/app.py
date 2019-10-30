@@ -220,7 +220,9 @@ N = 100
 # ======== layout config ======== #
 
 app.layout = html.Div([
+
     # ======== PRESENTACION PAGINA ======== #
+
     html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
     html.H5(children='''
     En esta página usted tiene acceso a distintas visualizaciones referentes a la situación 
@@ -253,7 +255,7 @@ app.layout = html.Div([
                 ),
     ]),
 
-    # hidden signal value
+    # ======== hidden signal value ======== #
     html.Div(id='signal', style={'display': 'none'}),
 
     # ========  time interval ======== #
@@ -370,7 +372,7 @@ def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero n
     Output('word-cloud-prensa', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wc_prensa(n, num_limit=10000):
+def update_wc_prensa(data, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
@@ -381,7 +383,7 @@ def update_wc_prensa(n, num_limit=10000):
     Output('word-cloud-chile', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wc_chile(n, num_limit=10000):
+def update_wc_chile(data, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
@@ -392,7 +394,7 @@ def update_wc_chile(n, num_limit=10000):
     Output('word-cloud-politico', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wc_politico(n, num_limit=10000):
+def update_wc_politico(data, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
