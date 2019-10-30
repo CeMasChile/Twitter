@@ -4,7 +4,8 @@ import sys
 import time
 
 import pandas as pd
-import simplejson as json
+import json
+from bson.json_util import dumps
 from pymongo import MongoClient
 
 
@@ -60,28 +61,34 @@ def _connect_mongo(host, port, username, password, db):
 
 
 def read_mongo(db, collection, query_condition={}, query_fields={}, host='localhost', port=27017, username=None,
-               password=None, no_id=True, num_limit=None):
-    """ Read from Mongo and Store into DataFrame """
+               password=None, no_id=True, num_limit=None, json_only=False):
+    """ Read from Mongo and Store into DataFrame or return JSON """
 
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
 
-    supress = 1
+    suppress = 1
     if no_id:
         suppress = 0
 
     query_fields["_id"] = suppress
 
     # Make a query to the specific DB and Collection
-    if(num_limit is None):
+    if num_limit is None:
         cursor = db[collection].find(query_condition, query_fields)
     else:
         cursor = db[collection].find(query_condition, query_fields).limit(num_limit)
 
-    # Expand the cursor and construct the DataFrame
-    df = pd.DataFrame(list(cursor))
+    # JSON return
+    if json_only:
+        return dumps(cursor)
 
-    return df
+    # Expand the cursor and construct the DataFrame
+    return pd.DataFrame(list(cursor))
+
+
+def json_pandas(json_string):
+    return pd.read_json(json_string)
 
 
 if __name__ == '__main__':

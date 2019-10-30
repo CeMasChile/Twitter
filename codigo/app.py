@@ -1,16 +1,19 @@
+import os
+
 import dash
 from datetime import datetime, timedelta
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import numpy as np
+from flask_caching import Cache
 
 from wordcloud import WordCloud
 from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
-from utils import get_latest_output, read_mongo
+from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
 
 # direction of the csv file
@@ -22,8 +25,6 @@ key_words = get_keywords()[:9]
 
 
 # ============== FUNCIONES =============== #
-
-
 
 
 # ===========================================FUNCIONES NUEVAS=================================
@@ -51,6 +52,7 @@ def get_kw_dict(dataframe):
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
 
+# FUNCIONA #
 def tweets_per_minute(df, column='created_at'):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
@@ -69,17 +71,17 @@ def get_users_dict(dataframe, users):
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
 
 
-
-def get_pandas_dict(df,key_words):
+def get_pandas_dict(df, keywords):
     kwdic = get_kw_dict(df)
-    DD={word:df.iloc[kwdic[word]] for word in key_words}
+    DD = {word: df.iloc[kwdic[word]] for word in keywords}
     DD['All'] = df
     return DD
 
+
 def tpm_kw(df, key_words):
-    pandas_dict=get_pandas_dict(df, key_words)
-    DTime = {key:tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
-    DTime = {key:DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
+    pandas_dict = get_pandas_dict(df, key_words)
+    DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
+    DTime = {key: DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
     return DTime
 
 
@@ -112,6 +114,7 @@ def get_word_frequency(dataframe, wordlist):
     return word_freq
 
 
+# FUNCIONA #
 def create_wordcloud_raster(dataframe, wordlist,
                             wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
     """
@@ -191,51 +194,103 @@ def create_wordcloud_raster(dataframe, wordlist,
 # ============== FIN FUNCIONES =============== #
 
 
-# ACÁ SE VAN A CONSTRUIR LAS PARTES DE LA APP, EN ESPECÍFICO, DE LA PARTE DE PALABRAS #
+# Figures for different tabs #
+figure_tweets_minute_prensa = dcc.Graph(id='plot-tweets-prensa')
+figure_tweets_minute_chile = dcc.Graph(id='plot-tweets-chile')
+figure_tweets_minute_politico = dcc.Graph(id='plot-tweets-politico')
 
+figure_wc_prensa = dcc.Graph(id='word-cloud-prensa')
+figure_wc_chile = dcc.Graph(id='word-cloud-chile')
+figure_wc_politico = dcc.Graph(id='word-cloud-politico')
 
-#  time inteval
-time_interval = dcc.Interval(
-    id='interval',
-    interval=60 * 1 * 1000,  # in milliseconds
-    n_intervals=0
-)
-
-# figure
-figure = dcc.Graph(id='plot')
-figure_wc = dcc.Graph(id='word-cloud')
-
-# ACÁ TERMINA #
-
-
-texto_explicativo = "En esta página usted tiene acceso a distintas herramientas para filtrar los datos que desde el " \
-                    "CeMAS dejamos a su disposición. "
-
-# css
+# CSS #
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-# se crea un objeto dash
+# se crea un objeto dash #
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+CACHE_CONFIG = {
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': 'cache-directory'
+}
+cache = Cache()
+cache.init_app(app.server, config=CACHE_CONFIG)
 
-# layout config
+N = 100
+
+# ======== layout config ======== #
 app.layout = html.Div([
-    html.H1('¡Bienvenid@ al DashBoard del CeMAS!'),
-    html.Div(texto_explicativo),
-    figure,
-    html.Div(figure_wc, style={'textAlign':'center'}),
-    time_interval
+    # ======== PRESENTACION PAGINA ======== #
+    html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
+    html.H5(children='''
+    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación 
+    actual de Chile. 
+    ''', style={'textAlign': 'center'}),
+
+    html.H6(children="El objetivo es  que la ciudadanía tenga un fácil acceso a lo que estan diciendo los actores "
+                     "políticos, los medios de comunicación y la ciudadanía",
+            style={'textAlign': 'center'}),
+
+    # ======== TABS PRENSA, CHILE, POLITICOS ======== #
+
+    dcc.Tabs(id='tabs-graphs', value='tab-1-prensa', children=[
+        dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-1-prensa', children=html.Div([
+            html.Div(figure_tweets_minute_prensa, style={'textAlign': 'center'}),
+            html.Div(figure_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
+        ])
+                ),
+
+        dcc.Tab(label='Chile', id='graphs-chile', value='tab-2-chile', children=html.Div([
+            html.Div(figure_tweets_minute_chile, style={'textAlign': 'center'}),
+            html.Div(figure_wc_chile, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
+        ])
+                ),
+
+        dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-3-politicos', children=html.Div([
+            html.Div(figure_tweets_minute_politico, style={'textAlign': 'center'}),
+            html.Div(figure_wc_politico, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
+        ])
+                ),
+    ]),
+
+    # hidden signal value
+    html.Div(id='signal', style={'display': 'none'}),
+
+    # ========  time interval ======== #
+    dcc.Interval(
+        id='interval',
+        interval=60 * 1 * 1000,  # in milliseconds
+        n_intervals=0
+    ),
 ])
 
 
-@app.callback(
-    Output('plot', 'figure'),  # the output is what to modify and which property
-    [Input('interval', 'n_intervals')]  # input is the trigger and the property
-)
-def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
-    # Read data from db
-    data = read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1})
+# ======== CALLBACKS ======== #
 
-    tweets_minute = tpm_kw(data, key_words)
+# perform expensive computations in this "global store"
+# these computations are cached in a globally available
+# memory store which is available across processes
+# and for all time.
+@cache.memoize()
+def global_store():
+    # Read data from db and return json
+    return read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1}, json_only=True)
+
+
+@app.callback(Output('signal', 'children'), [Input('interval', 'n_intervals')])
+def compute_data(n):
+    # compute value and send a signal when done
+    data = global_store()
+    return data
+
+
+# IF CALLBACK IS FOR A FIGURE --> ONE CALLBACK PER FIG IN EACH TAB #
+@app.callback(
+    Output('plot-tweets-prensa', 'figure'),  # the output is what to modify and which property
+    [Input('signal', 'children')]  # input is the trigger and the property
+)
+def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+
+    tweets_minute = tpm_kw(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
@@ -247,21 +302,98 @@ def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si n
                          y=tweets_minute[key]['created_at'].values,
                          mode='lines+markers',
                          text=key,
-                         name = key)
-              for key in key_words+['All']]
+                         name=key)
+              for key in key_words + ['All']]
 
     data = {
         'data': traces
     }
     return go.Figure(data)
 
+
 @app.callback(
-    Output('word-cloud', 'figure'),
-    [Input('interval', 'n_intervals')]
+    Output('plot-tweets-chile', 'figure'),  # the output is what to modify and which property
+    [Input('signal', 'children')]  # input is the trigger and the property
+)
+def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+
+    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    # get the indexes of the keywords
+    # kw_dict = get_kw_dict(data)
+    # dictionary of dfs
+    # pandas_kw_dict = {element:data.iloc[kw_dict[element]] for element in kw_dict}
+
+    # assign the 'created_at' column to the histogram
+
+    traces = [go.Scatter(x=tweets_minute[key].index,
+                         y=tweets_minute[key]['created_at'].values,
+                         mode='lines+markers',
+                         text=key,
+                         name=key)
+              for key in key_words + ['All']]
+
+    data = {
+        'data': traces
+    }
+    return go.Figure(data)
+
+
+@app.callback(
+    Output('plot-tweets-politico', 'figure'),  # the output is what to modify and which property
+    [Input('signal', 'children')]  # input is the trigger and the property
+)
+def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+
+    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    # get the indexes of the keywords
+    # kw_dict = get_kw_dict(data)
+    # dictionary of dfs
+    # pandas_kw_dict = {element:data.iloc[kw_dict[element]] for element in kw_dict}
+
+    # assign the 'created_at' column to the histogram
+
+    traces = [go.Scatter(x=tweets_minute[key].index,
+                         y=tweets_minute[key]['created_at'].values,
+                         mode='lines+markers',
+                         text=key,
+                         name=key)
+              for key in key_words + ['All']]
+
+    data = {
+        'data': traces
+    }
+    return go.Figure(data)
+
+
+@app.callback(
+    Output('word-cloud-prensa', 'figure'),
+    [Input('signal', 'children')]
 )
 def update_wordcloud(n, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
-                    query_fields={"created_at": 1, "text": 1},  num_limit=num_limit)
+                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
+
+    return create_wordcloud_raster(df, key_words)
+
+
+@app.callback(
+    Output('word-cloud-chile', 'figure'),
+    [Input('signal', 'children')]
+)
+def update_wordcloud(n, num_limit=10000):
+    df = read_mongo('dbTweets', 'tweets_chile',
+                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
+
+    return create_wordcloud_raster(df, key_words)
+
+
+@app.callback(
+    Output('word-cloud-politico', 'figure'),
+    [Input('signal', 'children')]
+)
+def update_wordcloud(n, num_limit=10000):
+    df = read_mongo('dbTweets', 'tweets_chile',
+                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
     return create_wordcloud_raster(df, key_words)
 
