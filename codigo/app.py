@@ -218,6 +218,7 @@ cache.init_app(app.server, config=CACHE_CONFIG)
 N = 100
 
 # ======== layout config ======== #
+
 app.layout = html.Div([
     # ======== PRESENTACION PAGINA ======== #
     html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
@@ -258,7 +259,7 @@ app.layout = html.Div([
     # ========  time interval ======== #
     dcc.Interval(
         id='interval',
-        interval=60 * 1 * 1000,  # in milliseconds
+        interval=120 * 1 * 1000,  # in milliseconds
         n_intervals=0
     ),
 ])
@@ -288,7 +289,7 @@ def compute_data(n):
     Output('plot-tweets-prensa', 'figure'),  # the output is what to modify and which property
     [Input('signal', 'children')]  # input is the trigger and the property
 )
-def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
     tweets_minute = tpm_kw(json_pandas(data), key_words)
     # get the indexes of the keywords
@@ -315,7 +316,7 @@ def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saqu
     Output('plot-tweets-chile', 'figure'),  # the output is what to modify and which property
     [Input('signal', 'children')]  # input is the trigger and the property
 )
-def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
     tweets_minute = tpm_kw(json_pandas(data), key_words)
     # get the indexes of the keywords
@@ -342,7 +343,7 @@ def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saqu
     Output('plot-tweets-politico', 'figure'),  # the output is what to modify and which property
     [Input('signal', 'children')]  # input is the trigger and the property
 )
-def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
     tweets_minute = tpm_kw(json_pandas(data), key_words)
     # get the indexes of the keywords
@@ -369,7 +370,7 @@ def update_tweets_minute(data):  # no sé pq está esa 'n' ahí, pero no la saqu
     Output('word-cloud-prensa', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wordcloud(n, num_limit=10000):
+def update_wc_prensa(n, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
@@ -380,7 +381,7 @@ def update_wordcloud(n, num_limit=10000):
     Output('word-cloud-chile', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wordcloud(n, num_limit=10000):
+def update_wc_chile(n, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
@@ -391,7 +392,7 @@ def update_wordcloud(n, num_limit=10000):
     Output('word-cloud-politico', 'figure'),
     [Input('signal', 'children')]
 )
-def update_wordcloud(n, num_limit=10000):
+def update_wc_politico(n, num_limit=10000):
     df = read_mongo('dbTweets', 'tweets_chile',
                     query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
 
