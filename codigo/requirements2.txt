@@ -6,3 +6,4 @@ pymongo
 simplejson
 tweepy
 wordcloud
+flask-caching

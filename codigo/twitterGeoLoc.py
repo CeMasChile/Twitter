@@ -124,12 +124,13 @@ class StreamListener(StreamListener):
                                      hash_tags,
                                      ])
 
+            print(status._json)
             # Add hashtags to JSON #
             json_str = json.dumps(status._json)
             json_obj = json.loads(json_str)
 
             json_obj['hash_tags'] = list(hash_tags)
-            json_obj['created_at'] = str(status.created_at - (datetime.now() - datetime.utcnow()))
+            json_obj['created_at'] = str(status.created_at + (datetime.now() - datetime.utcnow()))
 
             # json_str = json.JSONEncoder().encode(json_obj)
 

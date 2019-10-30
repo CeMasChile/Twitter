@@ -58,28 +58,28 @@ def _connect_mongo(host, port, username, password, db):
 
     return conn[db]
 
-
-def read_mongo(db, collection, query={}, host='localhost', port=27017, username=None, password=None, no_id=True):
+from memory_profiler import profile
+@profile
+def read_mongo(db, collection, query_condition={}, query_fields={}, host='localhost', port=27017, username=None, password=None, no_id=True):
     """ Read from Mongo and Store into DataFrame """
 
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
 
+    supress = 1
+    if no_id:
+        suppress = 0
+
+    query_fields["_id"] = suppress
+
     # Make a query to the specific DB and Collection
-    cursor = db[collection].find(query)
+    cursor = db[collection].find(query_condition, query_fields)
 
     # Expand the cursor and construct the DataFrame
     df = pd.DataFrame(list(cursor))
-
-    # Delete the _id
-    if no_id:
-        del df['_id']
 
     return df
 
 
 if __name__ == '__main__':
-    df = read_mongo('dbTweets', 'tweets_chile')
-
-
-
+    df = read_mongo('dbTweets', 'tweets_chile', query_fields={"text": 1})
