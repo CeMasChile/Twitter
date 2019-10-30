@@ -58,9 +58,9 @@ def _connect_mongo(host, port, username, password, db):
 
     return conn[db]
 
-from memory_profiler import profile
-@profile
-def read_mongo(db, collection, query_condition={}, query_fields={}, host='localhost', port=27017, username=None, password=None, no_id=True):
+
+def read_mongo(db, collection, query_condition={}, query_fields={}, host='localhost', port=27017, username=None,
+               password=None, no_id=True):
     """ Read from Mongo and Store into DataFrame """
 
     # Connect to MongoDB
