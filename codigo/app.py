@@ -1,4 +1,5 @@
 import dash
+from datetime import datetime, timedelta
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
@@ -39,12 +40,12 @@ def get_time_text(direction):
     pd.read_csv(direction, usecols=['created_at', 'text'])
 
 
-def get_kw_dict(dataframe):
+def get_kw_dict(df):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
+    return {kw: df[df['text'].str.contains(kw)].index for kw in key_words}
 
 
 def tweets_per_minute(df, column='created_at'):
@@ -84,7 +85,7 @@ def get_word_frequency(dataframe, wordlist):
     Count how many tweets contain a given word
     :param dataframe: Pandas dataframe from the tweepy mining
     :param wordlist: array-like with the keywords
-    
+
     TODO: - drop dependency on numpy?
     """
     word_freq = dict()
@@ -97,9 +98,9 @@ def get_word_frequency(dataframe, wordlist):
 def create_wordcloud_raster(dataframe, wordlist,
                             wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
     """
-    Generate a wordcloud of the keywords given, wheighted by the number of 
+    Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
-    
+
     :param dataframe: Pandas DataFrame object. It must contain a 'text' column with the
     tweets from the stream.
     :param wordlist: list of strings to plot in the word cloud.
@@ -164,7 +165,7 @@ def create_wordcloud_raster(dataframe, wordlist,
     fig.update_layout(
         width=img_width * scale_factor,
         height=img_height * scale_factor,
-        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        margin={"l": 0, "r": 0, "t": 0, "b": 0}
     )
 
     return fig
@@ -196,6 +197,7 @@ time_interval = dcc.Interval(
 
 # figure
 figure = dcc.Graph(id='plot')
+figure_wc = dcc.Graph(id='word-cloud')
 
 # ACÁ TERMINA #
 
@@ -215,35 +217,53 @@ app.layout = html.Div([
     html.Div(texto_explicativo),
     dropdown_menu,
     figure,
+    html.Div(figure_wc, style={'textAlign':'center'}),
     time_interval
 ])
 
 
 @app.callback(
-    Output('plot', 'figure'),  # the output is what to modify and which property
-    [Input('interval', 'n_intervals')]  # input is the trigger and the property
+    Output('plot', 'figure'),
+    [Input('interval', 'n_intervals')]
 )
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
-    global pandas_kw_dict
-    # Read data from db
     data = read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1})
 
     tweets_minute = tweets_per_minute(data)
-    # get the indexes of the keywords
-    kw_dict = get_kw_dict(data)
-    # dictionary of dfs
-    pandas_kw_dict = {element:data.iloc(kw_dict[element]) for element in kw_dict}
+    if(len(tweets_minute) > 1):  # Needs at least 2
+        # assign the 'created_at' column to the histogram
+        data = {
+            'data': [go.Scatter(
+                x=tweets_minute[1:].index,  # se salta el primer elemento porque no es el minuto completo
+                y=tweets_minute[1:]['created_at'].values,
+                mode='lines+markers'
+            )]
+        }
+    else:
+        data = {}
 
-    # assign the 'created_at' column to the histogram
-    data = {
-        'data': [go.Scatter(
-            x=tweets_minute.index,  # se salta el primer elemento porque no es el minuto completo
-            y=tweets_minute['created_at'].values,
-            mode='lines+markers'
-        )]
-    }
+    fig = go.Figure(data)
 
-    return go.Figure(data)  # returns the figure to be updated
+    fig.update_layout(
+        title="Tweets por Minuto en Chile"
+    )
+
+    fig.update_xaxes(
+        range=[datetime.now()-timedelta(hours=5), datetime.now()]
+    )
+
+    return fig
+
+
+@app.callback(
+    Output('word-cloud', 'figure'),
+    [Input('interval', 'n_intervals')]
+)
+def update_wordcloud(n, num_limit=10000):
+    df = read_mongo('dbTweets', 'tweets_chile',
+                    query_fields={"created_at": 1, "text": 1},  num_limit=num_limit)
+
+    return create_wordcloud_raster(df, key_words)
 
 
 if __name__ == '__main__':
