@@ -13,10 +13,9 @@ from utils import get_latest_output, read_mongo
 from main import get_keywords
 
 # direction of the csv file
-#latest_csv = get_latest_output()
+# latest_csv = get_latest_output()
 
 # df = pd.read_csv(latest_csv)
-
 
 key_words = get_keywords()
 
@@ -227,7 +226,8 @@ app.layout = html.Div([
 def update_graph(n):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
     global pandas_kw_dict
     # Read data from db
-    data = read_mongo('dbTweets', 'tweets_chile')
+    data = read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1})
+
     tweets_minute = tweets_per_minute(data)
     # get the indexes of the keywords
     kw_dict = get_kw_dict(data)
