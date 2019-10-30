@@ -60,7 +60,7 @@ def _connect_mongo(host, port, username, password, db):
 
 
 def read_mongo(db, collection, query_condition={}, query_fields={}, host='localhost', port=27017, username=None,
-               password=None, no_id=True):
+               password=None, no_id=True, num_limit=None):
     """ Read from Mongo and Store into DataFrame """
 
     # Connect to MongoDB
@@ -73,7 +73,10 @@ def read_mongo(db, collection, query_condition={}, query_fields={}, host='localh
     query_fields["_id"] = suppress
 
     # Make a query to the specific DB and Collection
-    cursor = db[collection].find(query_condition, query_fields)
+    if(num_limit is None):
+        cursor = db[collection].find(query_condition, query_fields)
+    else:
+        cursor = db[collection].find(query_condition, query_fields).limit(num_limit)
 
     # Expand the cursor and construct the DataFrame
     df = pd.DataFrame(list(cursor))
