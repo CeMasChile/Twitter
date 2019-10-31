@@ -4,15 +4,13 @@ import dash_html_components as html
 
 from flask_caching import Cache
 
-from wordcloud import WordCloud
-from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 import numpy as np
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
-from utils_app import tweets_per_minute
+from utils_app import tweets_per_minute, create_wordcloud_raster
 
 # direction of the csv file
 # latest_csv = get_latest_output()
@@ -22,95 +20,6 @@ from utils_app import tweets_per_minute
 key_words = get_keywords()[:9]
 
 
-def get_word_frequency(dataframe, wordlist):
-    """
-    Count how many tweets contain a given word
-    :param dataframe: Pandas dataframe from the tweepy mining
-    :param wordlist: array-like with the keywords
-
-    TODO: - drop dependency on numpy?
-    """
-    word_freq = dict()
-    for word in wordlist:
-        word_freq[word] = np.where(dataframe['tweet'].str.contains(word))[0].size
-
-    return word_freq
-
-
-def create_wordcloud_raster(dataframe, wordlist,
-                            wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
-    """
-    Generate a wordcloud of the keywords given, wheighted by the number of
-    unique tweets they appear in. Returns a go.Figure() instance.
-
-    :param dataframe: Pandas DataFrame object. It must contain a 'tweet' column with the
-    tweets from the stream.
-    :param wordlist: list of strings to plot in the word cloud.
-    :param wc_kwargs: dict of keyword arguments to give to the WordCloud
-    constructor.
-    """
-
-    # Build the word cloud from the data
-    wf = get_word_frequency(dataframe, wordlist)
-    word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
-
-    wc_raster = Image.fromarray(word_cloud.to_array())
-
-    # Call the constructor of Figure object
-    fig = go.Figure()
-
-    # Constants
-    img_width = 1600
-    img_height = 900
-    scale_factor = 0.5
-
-    # Add invisible scatter trace.
-    # This trace is added to help the autoresize logic work.
-    fig.add_trace(
-        go.Scatter(
-            x=[0, img_width * scale_factor],
-            y=[0, img_height * scale_factor],
-            mode="markers",
-            marker_opacity=0
-        )
-    )
-
-    # Configure axes
-    fig.update_xaxes(
-        visible=False,
-        range=[0, img_width * scale_factor]
-    )
-
-    fig.update_yaxes(
-        visible=False,
-        range=[0, img_height * scale_factor],
-        # the scaleanchor attribute ensures that the aspect ratio stays constant
-        scaleanchor="x"
-    )
-
-    # Add image
-    fig.update_layout(
-        images=[go.layout.Image(
-            x=0,
-            sizex=img_width * scale_factor,
-            y=img_height * scale_factor,
-            sizey=img_height * scale_factor,
-            xref="x",
-            yref="y",
-            opacity=1.0,
-            layer="below",
-            sizing="stretch",
-            source=wc_raster)]
-    )
-
-    # Configure other layout
-    fig.update_layout(
-        width=img_width * scale_factor,
-        height=img_height * scale_factor,
-        margin={"l": 0, "r": 0, "t": 0, "b": 0}
-    )
-
-    return fig
 
 
 # ============== FIN FUNCIONES =============== #
