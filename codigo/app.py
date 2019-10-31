@@ -36,7 +36,6 @@ def get_users(direction):
     '''
     return pd.read_csv(direction, usecols=['user.screen_name'])
 
-
 def get_time_text(direction):
     '''
     devuelve un df solo con la columna de horas y texto para cargar más rápido
@@ -51,38 +50,47 @@ def get_kw_dict(dataframe):
     '''
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
-
 # FUNCIONA #
-def tweets_per_minute(df, column='created_at'):
+def tweets_per_minute(df, key_words=None, column='created_at'):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
 
-    frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index()
-    return frecuencia_tweets.iloc[1:-1]
+    if key_words==None:
+        df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
+        frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index().iloc[1:-1]
+        return frecuencia_tweets
+    else:
+        pandas_dict = get_pandas_dict(df, key_words)
+        DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
+        DTime = {key: DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
+        return DTime
+
 
 
 def get_users_dict(dataframe, users):
     '''
-    devuelve un diccionario con los índices del df que contienen cada usuario, se dan en una lista
+    crea un diccionariocon los indices correspondientes a cada usuario, el usuario es la key
+    :param df: dataframe de la db
+    :param keywords: keywords para buscar
+    :return: devuelve un diccionario con las caracteristicas descritas
     '''
     return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
 
 
 def get_pandas_dict(df, keywords):
+    '''
+    crea un diccionariocon los indices correspondientes a cadapalabra clave, la palabra clave es la key
+    :param df: dataframe de la db
+    :param keywords: keywords para buscar
+    :return: devuelve un diccionario con las caracteristicas descritas
+    '''
     kwdic = get_kw_dict(df)
     DD = {word: df.iloc[kwdic[word]] for word in keywords}
     DD['All'] = df
     return DD
 
-
-def tpm_kw(df, key_words):
-    pandas_dict = get_pandas_dict(df, key_words)
-    DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
-    DTime = {key: DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
-    return DTime
 
 
 # =========================================== FIN FUNCIONES NUEVAS=================================
@@ -112,7 +120,6 @@ def get_word_frequency(dataframe, wordlist):
         word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
 
     return word_freq
-
 
 # FUNCIONA #
 def create_wordcloud_raster(dataframe, wordlist,
@@ -293,7 +300,7 @@ def compute_data(n):
 )
 def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
@@ -320,7 +327,7 @@ def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no 
 )
 def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
@@ -347,7 +354,7 @@ def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no l
 )
 def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
