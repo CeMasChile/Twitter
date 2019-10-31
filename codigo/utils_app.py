@@ -159,3 +159,13 @@ def create_wordcloud_raster(dataframe, wordlist,
     )
 
     return fig
+
+
+def get_username_list(direction):
+    '''
+    get a list of usernames given a direction of a csv file containing the list of usernames of interest
+    :param direction: direction of file with users
+    :return: a list with the users
+    '''
+    df = pd.read_csv(direction)
+    return list(df[~df['Twitter'].isna()]['Twitter'].str[1:].values)
