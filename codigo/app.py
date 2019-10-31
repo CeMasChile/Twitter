@@ -245,7 +245,7 @@ def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no 
     traces = [go.Scatter(x=tweets_minute[key].index,
                          y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         tweet=key,
+                         text=key,
                          name=key)
               for key in key_words + ['All']]
 
@@ -272,7 +272,7 @@ def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no l
     traces = [go.Scatter(x=tweets_minute[key].index,
                          y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         tweet=key,
+                         text=key,
                          name=key)
               for key in key_words + ['All']]
 
@@ -299,7 +299,7 @@ def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero n
     traces = [go.Scatter(x=tweets_minute[key].index,
                          y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         tweet=key,
+                         text=key,
                          name=key)
               for key in key_words + ['All']]
 
