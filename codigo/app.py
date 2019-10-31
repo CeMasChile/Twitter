@@ -4,8 +4,7 @@ import dash
 from datetime import datetime, timedelta
 import dash_core_components as dcc
 import dash_html_components as html
-import pandas as pd
-import numpy as np
+
 from flask_caching import Cache
 
 from wordcloud import WordCloud
@@ -15,6 +14,9 @@ from dash.dependencies import Input, Output
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
+from utils_app import tweets_per_minute
+
+
 
 # direction of the csv file
 # latest_csv = get_latest_output()
@@ -30,74 +32,6 @@ key_words = get_keywords()[:9]
 # ===========================================FUNCIONES NUEVAS=================================
 
 
-def get_users(direction):
-    '''
-    devuelve un df solo con la columna de usuarios para cargar más rápido
-    '''
-    return pd.read_csv(direction, usecols=['user.screen_name'])
-
-
-def get_time_text(direction):
-    '''
-    devuelve un df solo con la columna de horas y texto para cargar más rápido
-    '''
-    pd.read_csv(direction, usecols=['created_at', 'text'])
-
-
-def get_kw_dict(dataframe):
-    '''
-        devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
-        ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
-    '''
-    return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
-
-
-# FUNCIONA #
-def tweets_per_minute(df, column='created_at'):
-    '''
-    funcion que nos dice el nro de veces que aparece una determinada fecha
-    en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
-    '''
-    df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
-
-    frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index()
-    return frecuencia_tweets.iloc[1:-1]
-
-
-def get_users_dict(dataframe, users):
-    '''
-    devuelve un diccionario con los índices del df que contienen cada usuario, se dan en una lista
-    '''
-    return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
-
-
-def get_pandas_dict(df, keywords):
-    kwdic = get_kw_dict(df)
-    DD = {word: df.iloc[kwdic[word]] for word in keywords}
-    DD['All'] = df
-    return DD
-
-
-def tpm_kw(df, key_words):
-    pandas_dict = get_pandas_dict(df, key_words)
-    DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
-    DTime = {key: DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
-    return DTime
-
-
-# =========================================== FIN FUNCIONES NUEVAS=================================
-
-
-def key_word_filter(df, kw, kwdict):
-    """
-    filtra el dataframe entregado con la palabra clave pedida usando el diccionario
-    :param df: pandas dataframe to filter
-    :param kw: keyword to look for
-    :param kwdict: dictionary with the index values for the words
-    :return: a pd dataframe with the filteres request
-    """
-    return df.iloc[kwdict[kw]]
-
 
 def get_word_frequency(dataframe, wordlist):
     """
@@ -112,7 +46,6 @@ def get_word_frequency(dataframe, wordlist):
         word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
 
     return word_freq
-
 
 # FUNCIONA #
 def create_wordcloud_raster(dataframe, wordlist,
@@ -225,8 +158,8 @@ app.layout = html.Div([
 
     html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
     html.H5(children='''
-    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación 
-    actual de Chile. 
+    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación
+    actual de Chile.
     ''', style={'textAlign': 'center'}),
 
     html.H6(children="El objetivo es  que la ciudadanía tenga un fácil acceso a lo que estan diciendo los actores "
@@ -237,19 +170,31 @@ app.layout = html.Div([
 
     dcc.Tabs(id='tabs-graphs', value='tab-1-prensa', children=[
         dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-1-prensa', children=html.Div([
+            html.H6(children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_prensa, style={'textAlign': 'center'}),
-            html.Div(figure_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
+
+            html.H6("En donde las palabras que más usadas en sus tweets son:",
+                    style={'textAlign': 'center'}),
+            html.Div(figure_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'})
         ])
                 ),
 
         dcc.Tab(label='Chile', id='graphs-chile', value='tab-2-chile', children=html.Div([
+            html.H6(children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la gente utiliza la red social para expresarse:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_chile, style={'textAlign': 'center'}),
+
+            html.H6("Las palabras que más usan los usuarios de twitter son:",
+                    style={'textAlign': 'center'}),
             html.Div(figure_wc_chile, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
         ])
                 ),
 
         dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-3-politicos', children=html.Div([
+            html.H6(children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia con la que publican en Twitter es:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_politico, style={'textAlign': 'center'}),
+
+            html.H6("Las palabras que más usan los políticos para expresarse en Twitter son:",
+                    style={'textAlign': 'center'}),
             html.Div(figure_wc_politico, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
         ])
                 ),
@@ -293,7 +238,7 @@ def compute_data(n):
 )
 def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
@@ -320,7 +265,7 @@ def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no 
 )
 def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
@@ -347,7 +292,7 @@ def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no l
 )
 def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tpm_kw(json_pandas(data), key_words)
+    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
     # get the indexes of the keywords
     # kw_dict = get_kw_dict(data)
     # dictionary of dfs
