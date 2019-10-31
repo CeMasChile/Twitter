@@ -13,7 +13,7 @@ from utils import extract_hash_tags, parse_tweet
 from pymongo import MongoClient
 import json
 
-csv_prompt = input("Quiere crear un .csv?: [Y/n]").lower()
+csv_prompt = input("Quiere crear un .csv?: [Y/n] ").lower()
 
 if csv_prompt == "":
     csv_prompt = "y"
@@ -127,13 +127,23 @@ class StreamListener(StreamListener):
                                  hash_tags,
                                  ])
 
+            # PREPROCESS #
+
+            # SAVE TO EDIT #
             json_str = json.dumps(status._json)
+
+            # MAKE IT A DICT #
             json_obj = json.loads(json_str)
 
+            # MODIFY #
             json_obj['hash_tags'] = list(hash_tags)
             json_obj['created_at'] = str(status.created_at + (datetime.now() - datetime.utcnow()))
 
-            json_obj = parse_tweet(json_obj)
+            # PARSE #
+            json_str = parse_tweet(json_obj)
+
+            # MAKE IT A DICT AGAIN #
+            json_obj = json.loads(json_str)
 
             print(json_obj)
 

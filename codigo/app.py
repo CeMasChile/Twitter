@@ -1,7 +1,4 @@
-import os
-
 import dash
-from datetime import datetime, timedelta
 import dash_core_components as dcc
 import dash_html_components as html
 
@@ -11,12 +8,11 @@ from wordcloud import WordCloud
 from PIL import Image
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
+import numpy as np
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
 from utils_app import tweets_per_minute
-
-
 
 # direction of the csv file
 # latest_csv = get_latest_output()
@@ -24,13 +20,6 @@ from utils_app import tweets_per_minute
 # df = pd.read_csv(latest_csv)
 
 key_words = get_keywords()[:9]
-
-
-# ============== FUNCIONES =============== #
-
-
-# ===========================================FUNCIONES NUEVAS=================================
-
 
 
 def get_word_frequency(dataframe, wordlist):
@@ -47,7 +36,7 @@ def get_word_frequency(dataframe, wordlist):
 
     return word_freq
 
-# FUNCIONA #
+
 def create_wordcloud_raster(dataframe, wordlist,
                             wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
     """
@@ -170,7 +159,9 @@ app.layout = html.Div([
 
     dcc.Tabs(id='tabs-graphs', value='tab-1-prensa', children=[
         dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-1-prensa', children=html.Div([
-            html.H6(children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:", style={'textAlign': 'center'}),
+            html.H6(
+                children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:",
+                style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_prensa, style={'textAlign': 'center'}),
 
             html.H6("En donde las palabras que más usadas en sus tweets son:",
@@ -180,7 +171,9 @@ app.layout = html.Div([
                 ),
 
         dcc.Tab(label='Chile', id='graphs-chile', value='tab-2-chile', children=html.Div([
-            html.H6(children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la gente utiliza la red social para expresarse:", style={'textAlign': 'center'}),
+            html.H6(
+                children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la gente utiliza la red social para expresarse:",
+                style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_chile, style={'textAlign': 'center'}),
 
             html.H6("Las palabras que más usan los usuarios de twitter son:",
@@ -190,7 +183,9 @@ app.layout = html.Div([
                 ),
 
         dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-3-politicos', children=html.Div([
-            html.H6(children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia con la que publican en Twitter es:", style={'textAlign': 'center'}),
+            html.H6(
+                children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia con la que publican en Twitter es:",
+                style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_politico, style={'textAlign': 'center'}),
 
             html.H6("Las palabras que más usan los políticos para expresarse en Twitter son:",

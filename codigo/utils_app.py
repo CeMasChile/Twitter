@@ -1,5 +1,8 @@
 import pandas as pd
-import numpy as np
+
+from main import get_keywords
+
+key_words = get_keywords()[:9]
 
 
 def get_users(direction):
@@ -8,11 +11,13 @@ def get_users(direction):
     '''
     return pd.read_csv(direction, usecols=['user.screen_name'])
 
+
 def get_time_text(direction):
     '''
     devuelve un df solo con la columna de horas y texto para cargar más rápido
     '''
     pd.read_csv(direction, usecols=['created_at', 'text'])
+
 
 def get_kw_dict(dataframe):
     '''
@@ -21,6 +26,7 @@ def get_kw_dict(dataframe):
     '''
     return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
+
 # FUNCIONA #
 def tweets_per_minute(df, key_words=None, column='created_at'):
     '''
@@ -28,7 +34,7 @@ def tweets_per_minute(df, key_words=None, column='created_at'):
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
 
-    if key_words==None:
+    if key_words == None:
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
         frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets
@@ -37,7 +43,6 @@ def tweets_per_minute(df, key_words=None, column='created_at'):
         DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
         DTime = {key: DTime[key].reindex(DTime['All'].index).fillna(0) for key in DTime}
         return DTime
-
 
 
 def get_users_dict(dataframe, users):
@@ -61,4 +66,3 @@ def get_pandas_dict(df, keywords):
     DD = {word: df.iloc[kwdic[word]] for word in keywords}
     DD['All'] = df
     return DD
-
