@@ -9,12 +9,13 @@ from tweepy.streaming import StreamListener
 
 import config
 from main import get_keywords
-from utils import extract_hash_tags
+from utils import extract_hash_tags, parse_tweet
 from pymongo import MongoClient
 import json
 
 csv_prompt = input("Quiere crear un .csv?: [Y/n]").lower()
-if(csv_prompt == ""):
+
+if csv_prompt == "":
     csv_prompt = "y"
 
 # Region #
@@ -51,30 +52,30 @@ class StreamListener(StreamListener):
 
             # Write a single row with the headers of the columns
             writer.writerow(['text',
-                                 'created_at',
-                                 'geo',
-                                 'lang',
-                                 'place',
-                                 'user.favourites_count',
-                                 'user.statuses_count',
-                                 'user.description',
-                                 'user.location',
-                                 'user.id',
-                                 'user.created_at',
-                                'user.verified',
-                                'user.url',
-                                'user.listed_count',
-                                'user.friends_count',
-                                'user.name',
-                                'user.screen_name',
-                                'user.geo_enabled',
-                                'id',
-                                'favorite_count',
-                                'retweeted',
-                                'source',
-                                'favorited',
-                                'retweet_count',
-                                'hash_tags'])
+                             'created_at',
+                             'geo',
+                             'lang',
+                             'place',
+                             'user.favourites_count',
+                             'user.statuses_count',
+                             'user.description',
+                             'user.location',
+                             'user.id',
+                             'user.created_at',
+                             'user.verified',
+                             'user.url',
+                             'user.listed_count',
+                             'user.friends_count',
+                             'user.name',
+                             'user.screen_name',
+                             'user.geo_enabled',
+                             'id',
+                             'favorite_count',
+                             'retweeted',
+                             'source',
+                             'favorited',
+                             'retweet_count',
+                             'hash_tags'])
 
     def on_status(self, status):
         """
@@ -100,41 +101,41 @@ class StreamListener(StreamListener):
             # Write the tweet's information to the csv file
             if self.csv:
                 writer.writerow([status.text,
-                                     status.created_at + (datetime.now() - datetime.utcnow()),
-                                     status.geo,
-                                     status.lang,
-                                     status.place,
-                                     status.user.favourites_count,
-                                     status.user.statuses_count,
-                                     status.user.description,
-                                     status.user.location,
-                                     status.user.id,
-                                     status.user.created_at,
-                                     status.user.verified,
-                                     status.user.url,
-                                     status.user.listed_count,
-                                     status.user.friends_count,
-                                     status.user.name,
-                                     status.user.screen_name,
-                                     status.user.geo_enabled,
-                                     status.id,
-                                     status.favorite_count,
-                                     status.retweeted,
-                                     status.source,
-                                     status.favorited,
-                                     status.retweet_count,
-                                     hash_tags,
-                                     ])
+                                 status.created_at + (datetime.now() - datetime.utcnow()),
+                                 status.geo,
+                                 status.lang,
+                                 status.place,
+                                 status.user.favourites_count,
+                                 status.user.statuses_count,
+                                 status.user.description,
+                                 status.user.location,
+                                 status.user.id,
+                                 status.user.created_at,
+                                 status.user.verified,
+                                 status.user.url,
+                                 status.user.listed_count,
+                                 status.user.friends_count,
+                                 status.user.name,
+                                 status.user.screen_name,
+                                 status.user.geo_enabled,
+                                 status.id,
+                                 status.favorite_count,
+                                 status.retweeted,
+                                 status.source,
+                                 status.favorited,
+                                 status.retweet_count,
+                                 hash_tags,
+                                 ])
 
-            print(status._json)
-            # Add hashtags to JSON #
             json_str = json.dumps(status._json)
             json_obj = json.loads(json_str)
 
             json_obj['hash_tags'] = list(hash_tags)
             json_obj['created_at'] = str(status.created_at + (datetime.now() - datetime.utcnow()))
 
-            # json_str = json.JSONEncoder().encode(json_obj)
+            json_obj = parse_tweet(json_obj)
+
+            print(json_obj)
 
             # Insert to db #
             coll.insert_one(json_obj)

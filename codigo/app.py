@@ -373,8 +373,7 @@ def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero n
     [Input('signal', 'children')]
 )
 def update_wc_prensa(data, num_limit=10000):
-    df = read_mongo('dbTweets', 'tweets_chile',
-                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
+    df = json_pandas(data)
 
     return create_wordcloud_raster(df, key_words)
 
@@ -384,8 +383,7 @@ def update_wc_prensa(data, num_limit=10000):
     [Input('signal', 'children')]
 )
 def update_wc_chile(data, num_limit=10000):
-    df = read_mongo('dbTweets', 'tweets_chile',
-                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
+    df = json_pandas(data)
 
     return create_wordcloud_raster(df, key_words)
 
@@ -395,8 +393,7 @@ def update_wc_chile(data, num_limit=10000):
     [Input('signal', 'children')]
 )
 def update_wc_politico(data, num_limit=10000):
-    df = read_mongo('dbTweets', 'tweets_chile',
-                    query_fields={"created_at": 1, "text": 1}, num_limit=num_limit)
+    df = json_pandas(data)
 
     return create_wordcloud_raster(df, key_words)
 

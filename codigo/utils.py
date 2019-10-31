@@ -1,7 +1,9 @@
+import datetime
 import glob
 import os
 import sys
 import time
+from datetime import datetime
 
 import pandas as pd
 import json
@@ -19,7 +21,17 @@ def hour():
 
 def parse_tweet(j):
     try:
-        tt = {'geo': j['geo'], 'entities': j['entities'], 'tweet': j['text'], 'screenName': j['user']['screen_name']}
+        tt = {'dateTweet': j['created_at'],
+              'tweet': j['text'],
+              'screenName': j['user']['screen_name'],
+              'name': j['user']['name'],
+              'user_url': j['user']['url'],
+              'description': j['user']['description'],
+              'location': j['user']['location'],
+              'verified': j['user']['verified'],
+              'geoEnabled': j['user']['geo_enabled'],
+              'hash_tags': j['hash_tags']
+              }
         return json.dumps(tt)
     except KeyError:
         print("key error" + sys.exc_info()[1] + today().strftime('%Y-%m-%d %H:%M:%S'))
@@ -92,4 +104,5 @@ def json_pandas(json_string):
 
 
 if __name__ == '__main__':
-    df = read_mongo('dbTweets', 'tweets_chile', query_fields={"text": 1})
+    df = read_mongo('dbTweets', 'tweets_chile', query_fields={"text": 1, "user": 1})
+    print(df)
