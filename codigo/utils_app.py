@@ -48,14 +48,14 @@ def tweets_per_minute(df, key_words=None, column='dateTweet'):
         return DTime
 
 
-def get_users_dict(dataframe, users):
+def get_users_indexes(dataframe, users):
     '''
     crea un diccionariocon los indices correspondientes a cada usuario, el usuario es la key
     :param df: dataframe de la db
     :param keywords: keywords para buscar
     :return: devuelve un diccionario con las caracteristicas descritas
     '''
-    return {users[i]: dataframe[dataframe['screenName'].str.contains(users[i])].index for i in range(len(users))}
+    return [dataframe[dataframe['screenName'].str.contains(users[i])].index for i in range(len(users))]
 
 
 def get_pandas_dict(df, keywords):
