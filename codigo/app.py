@@ -42,7 +42,6 @@ def get_time_text(direction):
     '''
     pd.read_csv(direction, usecols=['created_at', 'text'])
 
-
 def get_kw_dict(dataframe):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
@@ -94,17 +93,6 @@ def get_pandas_dict(df, keywords):
 
 
 # =========================================== FIN FUNCIONES NUEVAS=================================
-
-
-def key_word_filter(df, kw, kwdict):
-    """
-    filtra el dataframe entregado con la palabra clave pedida usando el diccionario
-    :param df: pandas dataframe to filter
-    :param kw: keyword to look for
-    :param kwdict: dictionary with the index values for the words
-    :return: a pd dataframe with the filteres request
-    """
-    return df.iloc[kwdict[kw]]
 
 
 def get_word_frequency(dataframe, wordlist):
