@@ -9,14 +9,14 @@ def get_users(direction):
     '''
     devuelve un df solo con la columna de usuarios para cargar más rápido
     '''
-    return pd.read_csv(direction, usecols=['user.screen_name'])
+    return pd.read_csv(direction, usecols=['screenName'])
 
 
 def get_time_text(direction):
     '''
     devuelve un df solo con la columna de horas y texto para cargar más rápido
     '''
-    pd.read_csv(direction, usecols=['created_at', 'text'])
+    pd.read_csv(direction, usecols=['dateTweet', 'tweet'])
 
 
 def get_kw_dict(dataframe):
@@ -24,11 +24,11 @@ def get_kw_dict(dataframe):
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {key_words[i]: dataframe[dataframe['text'].str.contains(key_words[i])].index for i in range(len(key_words))}
+    return {key_words[i]: dataframe[dataframe['tweet'].str.contains(key_words[i])].index for i in range(len(key_words))}
 
 
 # FUNCIONA #
-def tweets_per_minute(df, key_words=None, column='created_at'):
+def tweets_per_minute(df, key_words=None, column='dateTweet'):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
@@ -36,7 +36,7 @@ def tweets_per_minute(df, key_words=None, column='created_at'):
 
     if key_words == None:
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
-        frecuencia_tweets = pd.DataFrame(df['created_at'].value_counts()).sort_index().iloc[1:-1]
+        frecuencia_tweets = pd.DataFrame(df['dateTweet'].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets
     else:
         pandas_dict = get_pandas_dict(df, key_words)
@@ -52,7 +52,7 @@ def get_users_dict(dataframe, users):
     :param keywords: keywords para buscar
     :return: devuelve un diccionario con las caracteristicas descritas
     '''
-    return {users[i]: dataframe[dataframe['user.screen_name'].str.contains(users[i])].index for i in range(len(users))}
+    return {users[i]: dataframe[dataframe['screenName'].str.contains(users[i])].index for i in range(len(users))}
 
 
 def get_pandas_dict(df, keywords):

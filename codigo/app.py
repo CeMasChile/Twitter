@@ -32,7 +32,7 @@ def get_word_frequency(dataframe, wordlist):
     """
     word_freq = dict()
     for word in wordlist:
-        word_freq[word] = np.where(dataframe['text'].str.contains(word))[0].size
+        word_freq[word] = np.where(dataframe['tweet'].str.contains(word))[0].size
 
     return word_freq
 
@@ -43,7 +43,7 @@ def create_wordcloud_raster(dataframe, wordlist,
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
 
-    :param dataframe: Pandas DataFrame object. It must contain a 'text' column with the
+    :param dataframe: Pandas DataFrame object. It must contain a 'tweet' column with the
     tweets from the stream.
     :param wordlist: list of strings to plot in the word cloud.
     :param wc_kwargs: dict of keyword arguments to give to the WordCloud
@@ -216,7 +216,8 @@ app.layout = html.Div([
 @cache.memoize()
 def global_store():
     # Read data from db and return json
-    return read_mongo('dbTweets', 'tweets_chile', query_fields={"created_at": 1, "text": 1}, json_only=True)
+    return read_mongo('dbTweets', 'tweets_chile', query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
+                      json_only=True)
 
 
 @app.callback(Output('signal', 'children'), [Input('interval', 'n_intervals')])
@@ -242,9 +243,9 @@ def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no 
     # assign the 'created_at' column to the histogram
 
     traces = [go.Scatter(x=tweets_minute[key].index,
-                         y=tweets_minute[key]['created_at'].values,
+                         y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         text=key,
+                         tweet=key,
                          name=key)
               for key in key_words + ['All']]
 
@@ -269,9 +270,9 @@ def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no l
     # assign the 'created_at' column to the histogram
 
     traces = [go.Scatter(x=tweets_minute[key].index,
-                         y=tweets_minute[key]['created_at'].values,
+                         y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         text=key,
+                         tweet=key,
                          name=key)
               for key in key_words + ['All']]
 
@@ -296,9 +297,9 @@ def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero n
     # assign the 'created_at' column to the histogram
 
     traces = [go.Scatter(x=tweets_minute[key].index,
-                         y=tweets_minute[key]['created_at'].values,
+                         y=tweets_minute[key]['dateTweet'].values,
                          mode='lines+markers',
-                         text=key,
+                         tweet=key,
                          name=key)
               for key in key_words + ['All']]
 
