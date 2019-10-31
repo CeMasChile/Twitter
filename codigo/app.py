@@ -225,8 +225,8 @@ app.layout = html.Div([
 
     html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
     html.H5(children='''
-    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación 
-    actual de Chile. 
+    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación
+    actual de Chile.
     ''', style={'textAlign': 'center'}),
 
     html.H6(children="El objetivo es  que la ciudadanía tenga un fácil acceso a lo que estan diciendo los actores "
@@ -237,19 +237,31 @@ app.layout = html.Div([
 
     dcc.Tabs(id='tabs-graphs', value='tab-1-prensa', children=[
         dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-1-prensa', children=html.Div([
+            html.H6(children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_prensa, style={'textAlign': 'center'}),
-            html.Div(figure_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
+
+            html.H6("En donde las palabras que más usadas en sus tweets son:",
+                    style={'textAlign': 'center'}),
+            html.Div(figure_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'})
         ])
                 ),
 
         dcc.Tab(label='Chile', id='graphs-chile', value='tab-2-chile', children=html.Div([
+            html.H6(children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la gente utiliza la red social para expresarse:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_chile, style={'textAlign': 'center'}),
+
+            html.H6("Las palabras que más usan los usuarios de twitter son:",
+                    style={'textAlign': 'center'}),
             html.Div(figure_wc_chile, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
         ])
                 ),
 
         dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-3-politicos', children=html.Div([
+            html.H6(children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia con la que publican en Twitter es:", style={'textAlign': 'center'}),
             html.Div(figure_tweets_minute_politico, style={'textAlign': 'center'}),
+
+            html.H6("Las palabras que más usan los políticos para expresarse en Twitter son:",
+                    style={'textAlign': 'center'}),
             html.Div(figure_wc_politico, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
         ])
                 ),
