@@ -1,7 +1,8 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
+import warnings
+warnings.filterwarnings('ignore')
 from flask_caching import Cache
 
 import plotly.graph_objs as go
@@ -10,15 +11,20 @@ import numpy as np
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
-from utils_app import tweets_per_minute, create_wordcloud_raster
+from utils_app import tweets_per_minute,tweets_per_minute_users, create_wordcloud_raster, get_username_list, get_users_indexes
 
 # direction of the csv file
 # latest_csv = get_latest_output()
 
 # df = pd.read_csv(latest_csv)
+noticieros_direction = './Noticieros Twitter.csv'
+politicos_direction = './Politicos-Twitter.csv'
+
+
 
 key_words = get_keywords()[:9]
-
+noticieros = get_username_list(noticieros_direction)
+politicos = get_username_list(politicos_direction)
 
 
 
@@ -66,7 +72,7 @@ app.layout = html.Div([
 
     # ======== TABS PRENSA, CHILE, POLITICOS ======== #
 
-    dcc.Tabs(id='tabs-graphs', value='tab-1-prensa', children=[
+    dcc.Tabs(id='tabs-graphs', value='tab-2-chile', children=[
         dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-1-prensa', children=html.Div([
             html.H6(
                 children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:",
@@ -142,21 +148,17 @@ def compute_data(n):
     [Input('signal', 'children')]  # input is the trigger and the property
 )
 def update_tweets_minute_prensa(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
+    noticias_indexes = get_users_indexes(json_pandas(data), noticieros)
 
-    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
-    # get the indexes of the keywords
-    # kw_dict = get_kw_dict(data)
-    # dictionary of dfs
-    # pandas_kw_dict = {element:data.iloc[kw_dict[element]] for element in kw_dict}
+    tweets_minute = tweets_per_minute_users(json_pandas(data),noticias_indexes, key_words)
 
-    # assign the 'created_at' column to the histogram
 
-    traces = [go.Scatter(x=tweets_minute[key].index,
-                         y=tweets_minute[key]['dateTweet'].values,
+    traces = [go.Scatter(x=tweets_minute.index,
+                         y=tweets_minute[col].values,
                          mode='lines+markers',
-                         text=key,
-                         name=key)
-              for key in key_words + ['All']]
+                         text=col,
+                         name=col)
+              for col in key_words + ['All']]
 
     data = {
         'data': traces
@@ -197,24 +199,22 @@ def update_tweets_minute_chile(data):  # no sé pq está esa 'n' ahí, pero no l
 )
 def update_tweets_minute_politico(data):  # no sé pq está esa 'n' ahí, pero no la saquen que si no no funciona
 
-    tweets_minute = tweets_per_minute(json_pandas(data), key_words)
-    # get the indexes of the keywords
-    # kw_dict = get_kw_dict(data)
-    # dictionary of dfs
-    # pandas_kw_dict = {element:data.iloc[kw_dict[element]] for element in kw_dict}
+    politicos_indexes = get_users_indexes(json_pandas(data), politicos)
 
-    # assign the 'created_at' column to the histogram
+    tweets_minute = tweets_per_minute_users(json_pandas(data),politicos_indexes, key_words)
 
-    traces = [go.Scatter(x=tweets_minute[key].index,
-                         y=tweets_minute[key]['dateTweet'].values,
+
+    traces = [go.Scatter(x=tweets_minute.index,
+                         y=tweets_minute[col].values,
                          mode='lines+markers',
-                         text=key,
-                         name=key)
-              for key in key_words + ['All']]
+                         text=col,
+                         name=col)
+              for col in key_words + ['All']]
 
     data = {
         'data': traces
     }
+
     return go.Figure(data)
 
 
