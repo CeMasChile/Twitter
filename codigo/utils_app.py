@@ -4,6 +4,7 @@ import plotly.graph_objs as go
 from wordcloud import WordCloud
 from main import get_keywords
 import numpy as np
+import time
 
 key_words = get_keywords()[:9]
 
@@ -22,25 +23,26 @@ def get_time_text(direction):
     pd.read_csv(direction, usecols=['dateTweet', 'tweet'])
 
 
-def get_kw_dict(dataframe, col='tweet'):
+def get_kw_dict(df, col='tweet'):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {key_words[i]: dataframe[dataframe[col].str.contains(key_words[i])].index for i in range(len(key_words))}
+    return {kw: df[df[col].str.contains(kw)].index for kw in key_words}
 
 
 # FUNCIONA #
-def tweets_per_minute(df, key_words=None, column='dateTweet', wholedf=None):
+def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    if wholedf==None:
-        wholedf=df
+    if(wholedf is None):
+        wholedf = df
 
     wholedf.loc[:, column] = pd.to_datetime(wholedf[column], utc=True).dt.floor('min')
-    index_frecuencia_tweets = pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
+    index_frecuencia_tweets = \
+        pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
 
     if key_words == None:
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
@@ -48,25 +50,25 @@ def tweets_per_minute(df, key_words=None, column='dateTweet', wholedf=None):
         return frecuencia_tweets.reindex(index_frecuencia_tweets).fillna(0)
     else:
         pandas_dict = get_pandas_dict(df, key_words)
-        DTime = {key: tweets_per_minute(pandas_dict[key]) for key in pandas_dict}
+        DTime = {key: get_tpm(pandas_dict[key]) for key in pandas_dict}
         DTime = {key: DTime[key].reindex(index_frecuencia_tweets).fillna(0) for key in DTime}
         return DTime
 
-def get_users_indexes(dataframe, users, col='screenName'):
+def get_users_indices(df, users, col='screenName'):
     '''
     crea una lista con los indices correspondientes a cada todos los usuarios solicitados
     :param df: dataframe de la db
     :param keywords: lista de usuarios para buscar
     :return: devuelve una lista con las caracteristicas descritas
     '''
-    list_indexes = [dataframe[dataframe[col].str.contains(users[i])].index for i in range(len(users))]
-    index_final=pd.Index([])
-    for element in list_indexes:
-        index_final=index_final.union(element)
-    return index_final
+    list_indices = [df[df[col].str.contains(user)].index for user in users]
+    final_index = pd.Index([])
+    for element in list_indices:
+        final_index = final_index.union(element)
+    return final_index
 
 
-def tweets_per_minute_users(df, indexes, key_words):
+def get_tpm_users(df, indexes, key_words):
     '''
     function that gets a df and the indexes of interest to filter users
     :param df: dataframe from db
@@ -98,36 +100,35 @@ def get_pandas_dict(df, keywords):
     DD['All'] = df
     return DD
 
-def get_word_frequency(dataframe, wordlist):
+def get_word_frequency(df, wordlist):
     """
     Count how many tweets contain a given word
-    :param dataframe: Pandas dataframe from the tweepy mining
+    :param df: Pandas dataframe from the tweepy mining
     :param wordlist: array-like with the keywords
 
     TODO: - drop dependency on numpy?
     """
     word_freq = dict()
     for word in wordlist:
-        word_freq[word] = np.where(dataframe['tweet'].str.contains(word))[0].size
+        word_freq[word] = np.where(df['tweet'].str.contains(word))[0].size
 
     return word_freq
 
 
-def create_wordcloud_raster(dataframe, wordlist,
-                            wc_kwargs=dict(background_color='white', colormap='plasma', width=1200, height=800)):
+def create_wc(df, wordlist, wc_kwargs={"background_color":'white', "colormap":'plasma',
+              "width":1200, "height":800}):
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
 
-    :param dataframe: Pandas DataFrame object. It must contain a 'tweet' column with the
+    :param df: Pandas DataFrame object. It must contain a 'tweet' column with the
     tweets from the stream.
     :param wordlist: list of strings to plot in the word cloud.
     :param wc_kwargs: dict of keyword arguments to give to the WordCloud
     constructor.
     """
-
     # Build the word cloud from the data
-    wf = get_word_frequency(dataframe, wordlist)
+    wf = get_word_frequency(df, wordlist)
     word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
 
     wc_raster = Image.fromarray(word_cloud.to_array())
@@ -185,7 +186,6 @@ def create_wordcloud_raster(dataframe, wordlist,
         height=img_height * scale_factor,
         margin={"l": 0, "r": 0, "t": 0, "b": 0}
     )
-
     return fig
 
 
