@@ -85,22 +85,34 @@ class StreamListener(StreamListener):
         """
 
         global writer, file
+        
         if self.csv:
             # Open the csv file created previously
             file = open(self.filename, 'a')
             # Create a csv writer
             writer = csv.writer(file)
 
-        # Try to
-        try:
-            # On screen tweets #
-            # print(status.author.screen_name, status.created_at, status.text)
 
-            hash_tags = extract_hash_tags(status.text)
+        try:
+            
+            # Retrieve full text in case it is truncated
+            if hasattr(status, "retweeted_status"):
+                try:
+                    text = status.retweeted_status.extended_tweet["full_text"]
+                except AttributeError:
+                    text = status.retweeted_status.text
+            
+            else:
+                try:
+                    text = status.extended_tweet['full_text']
+                except AttributeError:
+                    text = status.text
+              
+            hash_tags = extract_hash_tags(text)
 
             # Write the tweet's information to the csv file
             if self.csv:
-                writer.writerow([status.text,
+                writer.writerow([text,
                                  status.created_at + (datetime.now() - datetime.utcnow()),
                                  status.geo,
                                  status.lang,

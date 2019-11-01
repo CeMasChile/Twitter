@@ -61,11 +61,8 @@ def get_users_indices(df, users, col='screenName'):
     :param keywords: lista de usuarios para buscar
     :return: devuelve una lista con las caracteristicas descritas
     '''
-    list_indices = [df[df[col].str.contains(user)].index for user in users]
-    final_index = pd.Index([])
-    for element in list_indices:
-        final_index = final_index.union(element)
-    return final_index
+    return df[df[col].isin(users)].index
+
 
 
 def get_tpm_users(df, indexes, key_words):
