@@ -155,7 +155,6 @@ class StreamListener(StreamListener):
             # Print the error
             print(e)
             # and continue
-            pass
 
         if self.csv:
             # Close the csv file
