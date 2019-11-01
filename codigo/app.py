@@ -9,6 +9,7 @@ import time
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 import numpy as np
+from multiprocessing import Process, Queue
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
@@ -25,13 +26,9 @@ keywords = get_keywords()[:9]
 noticieros = get_username_list(dir_noticias)
 politicos = get_username_list(dir_politicos)
 
-tpm_politicos = None
-tpm_prensa = None
-tpm_chile = None
-
-tweets_politicos = None
-tweets_prensa = None
-tweets_chile = None
+json_data = None
+data_chile, data_prensa, data_politicos = {}, {}, {}
+wc_chile, wc_prensa, wc_politicos = go.Figure({}), go.Figure({}), go.Figure({})
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -143,8 +140,9 @@ def global_store(num_limit=None):
     [Input('interval', 'n_intervals')]
 )
 def compute_data(_):
-    data = global_store(num_limit=None)
-    return data
+    global json_data
+    json_data = json_pandas(global_store(num_limit=None))
+    return None
 
 
 # tweets per minute callbacks
@@ -152,80 +150,96 @@ def compute_data(_):
     Output('plot-tweets-prensa', 'figure'),
     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
 )
-def update_graphs_prensa(data, tab):
-    if(tab == 'tab-prensa'):
-        json_data = json_pandas(data)
+def update_graphs_prensa(_, tab):
+    global data_prensa
+    if(tab == 'tab-prensa' and json_data is not None):
         noticias_indices = get_users_indices(json_data, noticieros)
         tpm = get_tpm_users(json_data, noticias_indices, keywords)
 
         traces = [go.Scatter(x=tpm.index, y=tpm[col].values, mode='lines+markers',
                   text=col, name=col) for col in keywords + ['All']]
 
-        data = {'data':traces}
-        return go.Figure(data)
+        data_prensa = {'data':traces}
+        return go.Figure(data_prensa)
     else:
-        return go.Figure()
+        return go.Figure(data_prensa)
 
 
 @app.callback(
     Output('plot-tweets-politico', 'figure'),
     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
 )
-def update_graphs_politicos(data, tab):
-    if(tab == 'tab-politicos'):
-        json_data = json_pandas(data)
+def update_graphs_politicos(_, tab):
+    global data_politicos
+    if(tab == 'tab-politicos' and json_data is not None):
         idx = get_users_indices(json_data, politicos)
         tpm = get_tpm_users(json_data, idx, keywords)
 
         traces = [go.Scatter(x=tpm.index, y=tpm[col].values, mode='lines+markers',
                   text=col, name=col) for col in keywords + ['All']]
 
-        data = {'data':traces}
-        return go.Figure(data)
+        data_politicos = {'data':traces}
+        return go.Figure(data_politicos)
     else:
-        return go.Figure()
+        return go.Figure(data_politicos)
 
 
 @app.callback(
     Output('plot-tweets-chile', 'figure'),
     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
 )
-def update_graphs_chile(data, tab):
-    if(tab == 'tab-chile'):
-        tpm = get_tpm(json_pandas(data), keywords)
+def update_graphs_chile(_, tab):
+    global data_chile
+    if(tab == 'tab-chile' and json_data is not None):
+        tpm = get_tpm(json_data, keywords)
 
         traces = [go.Scatter(x=tpm[key].index, y=tpm[key]['dateTweet'].values,
                   mode='lines+markers', text=key, name=key)
                   for key in keywords + ['All']]
 
-        data = {'data': traces}
-        return go.Figure(data)
+        data_chile = {'data': traces}
+        return go.Figure(data_chile)
     else:
-        return go.Figure()
+        return go.Figure(data_chile)
 
 
 # WordCloud callbacks
-# @app.callback(
-#     Output('word-cloud-prensa', 'figure'),
-#     [Input('signal', 'children')]
-# )
-# def update_wc_prensa(data):
-#     return create_wc(json_pandas(data), keywords)
-#
-#
-# @app.callback(
-#     Output('word-cloud-politico', 'figure'),
-#     [Input('signal', 'children')]
-# )
-# def update_wc_politico(data):
-#     return create_wc(json_pandas(data), keywords)
-#
-# @app.callback(
-#     Output('word-cloud-chile', 'figure'),
-#     [Input('signal', 'children')]
-# )
-# def update_wc_chile(data):
-#     return create_wc(json_pandas(data), keywords)
+@app.callback(
+    Output('word-cloud-prensa', 'figure'),
+    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
+)
+def update_wc_prensa(_, tab):
+    global wc_prensa
+    if(tab == 'tab-prensa' and json_data is not None):
+        wc_prensa = create_wc(json_data, keywords)
+        return wc_prensa
+    else:
+        return wc_prensa
+
+
+@app.callback(
+    Output('word-cloud-politico', 'figure'),
+    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
+)
+def update_wc_politicos(_, tab):
+    global wc_politicos
+    if(tab == 'tab-politico' and json_data is not None):
+        wc_politicos = create_wc(json_data, keywords)
+        return wc_politicos
+    else:
+        return wc_politicos
+
+@app.callback(
+    Output('word-cloud-chile', 'figure'),
+    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
+)
+def update_wc_chile(_, tab):
+    global wc_chile
+    if(tab == 'tab-chile' and json_data is not None):
+        wc_chile = create_wc(json_data, keywords)
+        return wc_chile
+    else:
+        return wc_chile
 
 
 if __name__ == '__main__':
