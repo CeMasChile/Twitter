@@ -20,9 +20,28 @@ def hour():
 
 
 def parse_tweet(j):
+    """
+    Parses a dictionary created from a tweepy Status object
+    into a JSON formatted string.
+    :param j: dict
+    """
+    
+    # Retrieve full text in case it is truncated
+    if "retweeted_status" in j.keys():
+        try:
+            text = j["retweeted_status"]["extended_tweet"]["full_text"]
+        except KeyError:
+            text = j["retweeted_status"]["text"]
+    else:
+        try:
+            text = j["extended_tweet"]["full_text"]
+        except KeyError:
+            text =  j["text"]
+    
+    # Create custom json with only the useful info.
     try:
         tt = {'dateTweet': j['created_at'],
-              'tweet': j['text'],
+              'tweet': text,
               'screenName': j['user']['screen_name'],
               'name': j['user']['name'],
               'user_url': j['user']['url'],
