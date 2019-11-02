@@ -1,21 +1,14 @@
+import warnings
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.graph_objs as go
-import pandas as pd
-import warnings
-warnings.filterwarnings('ignore')
-from flask_caching import Cache
-import time
 
-from datetime import datetime, timedelta
+warnings.filterwarnings('ignore')
 from dash.dependencies import Input, Output
 from multiprocessing import Process, Queue
-
-from utils import get_latest_output, read_mongo, json_pandas
+from utils import read_mongo, json_pandas
 from main import get_keywords
-from utils_app import get_tpm, create_graph, create_wc, get_username_list, get_users_indices
-
+from utils_app import get_tpm, create_graph, create_wc, get_username_list
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # global variables
@@ -33,9 +26,8 @@ time_interval = 30  # seconds
 df = json_pandas(
     read_mongo('dbTweets', 'tweets_chile',
                query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-               json_only=True, num_limit=10**5)
+               json_only=True, num_limit=10 ** 5)
 )
-
 
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
@@ -55,9 +47,7 @@ graph_politicos = create_graph(tpm_politicos, keywords)
 wc_politicos = create_wc(tpm_politicos, keywords)
 q_politicos = Queue()
 
-
 max_length = 100  # maximum number of points to plot
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # layout
@@ -103,7 +93,8 @@ app.layout = html.Div([
     dcc.Tabs(id='tabs-graphs', value='tab-chile', children=[
         dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-prensa', children=html.Div([
             html.H6(
-                children="Los distintos medios de comunicación chilenos utilizan .  En tiempo real, se puede ver la cantidad de Tweets realizadas por la prensa:",
+                children="Los distintos medios de comunicación chilenos utilizan Twitter.  En tiempo real, se puede "
+                         "ver la cantidad de Tweets realizadas por la prensa:",
                 style={'textAlign': 'center'}),
             html.Div(fig_tpm_prensa, style={'textAlign': 'center'}),
 
@@ -115,7 +106,8 @@ app.layout = html.Div([
 
         dcc.Tab(label='Chile', id='graphs-chile', value='tab-chile', children=html.Div([
             html.H6(
-                children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la gente utiliza la red social para expresarse:",
+                children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la "
+                         "gente utiliza la red social para expresarse:",
                 style={'textAlign': 'center'}),
             html.Div(fig_tpm_chile, style={'textAlign': 'center'}),
 
@@ -127,15 +119,16 @@ app.layout = html.Div([
 
         dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-politicos', children=html.Div([
             html.H6(
-                children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia con la que publican en Twitter es:",
+                children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia "
+                         "con la que publican en Twitter es:",
                 style={'textAlign': 'center'}),
             html.Div(fig_tpm_politicos, style={'textAlign': 'center'}),
 
             html.H6("Las palabras que más usan los políticos para expresarse en Twitter son:",
                     style={'textAlign': 'center'}),
             html.Div(fig_wc_politicos, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
-            ])
-        ),
+        ])
+                ),
     ]),
 
     # ======== hidden signal value ======== #
@@ -159,27 +152,27 @@ def global_store(num_limit=None):
                       json_only=True, num_limit=num_limit)
 
 
-def multiprocessing_wc(tpm, keywords, queue, test_without_wc=True):
-    queue.put( create_wc(tpm, keywords) )
+def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
+    queue.put(create_wc(tpm, kws))
 
 
-def update_tpm(df, keywords, tpm, datetime, return_changed=True):
+def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     tpm_changed = False
-    new_tpm = get_tpm(df.copy(), keywords)
+    new_tpm = get_tpm(data_frame.copy(), kws)
 
-    for key in (keywords + ['All']):
+    for key in (kws + ['All']):
         # keep only new values of tweets_per_minute
         new_tpm[key] = new_tpm[key].loc[new_tpm[key].index > datetime]
         tpm_changed = len(new_tpm[key].index) > 0
 
         tpm[key] = tpm[key].append(new_tpm[key])
-        if(len(tpm[key].index) > max_length):  # check tpm array max length
+        if len(tpm[key].index) > max_length:  # check tpm array max length
             tpm[key] = tpm[key].iloc[-max_length:]
 
     new_datetime = tpm['All'].index.max()
 
-    if(return_changed is True):
-        return tpm_changed, tpm, datetime
+    if return_changed is True:
+        return tpm_changed, tpm, new_datetime
     else:
         return tpm, datetime
 
@@ -194,13 +187,13 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
         tpm_changed = len(new_tpm[key].index) > 0
 
         tpm[key] = tpm[key].append(new_tpm[key])
-        if(len(tpm[key].index) > max_length):  # check tpm array max length
+        if len(tpm[key].index) > max_length:  # check tpm array max length
             tpm[key] = tpm[key].iloc[-max_length:]
 
     datetime_prensa = tpm['All'].index.max()
 
-    if(return_changed is True):
-        return tpm_changed, tpm, datetime
+    if return_changed is True:
+        return tpm_changed, tpm, datetime_prensa
     else:
         return tpm, datetime
 
@@ -215,12 +208,12 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
 def compute_data(_):
     return read_mongo('dbTweets', 'tweets_chile',
                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-                      json_only=True, num_limit=10**4)
+                      json_only=True, num_limit=10 ** 4)
 
 
 # tweets per minute callbacks
 @app.callback(
-    [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile','figure')],
+    [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile', 'figure')],
     [Input('signal', 'children')]
 )
 def update_chile(df):
@@ -229,7 +222,7 @@ def update_chile(df):
     tpm_changed, tpm_chile, datetime_chile = \
         update_tpm(json_pandas(df), keywords, tpm_chile, datetime_chile)
 
-    if(tpm_changed is True):
+    if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
         p.start()
 
@@ -251,7 +244,7 @@ def update_graphs_prensa(df):
     tpm_changed, tpm_prensa, datetime_prensa = \
         update_tpm_users(json_pandas(df), noticieros, keywords, tpm_prensa, datetime_prensa)
 
-    if(tpm_changed is True):
+    if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_prensa, keywords, q_prensa))
         p.start()
 
@@ -273,7 +266,7 @@ def update_graphs_politicos(df):
     tpm_changed, tpm_politicos, datetime_politicos = \
         update_tpm_users(json_pandas(df), politicos, keywords, tpm_politicos, datetime_politicos)
 
-    if(tpm_changed is True):
+    if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_politicos, keywords, q_politicos))
         p.start()
 

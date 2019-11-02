@@ -9,3 +9,4 @@ tweepy
 wordcloud
 flask-caching
 gensim
+matplotlib

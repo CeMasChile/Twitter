@@ -1,10 +1,10 @@
-import pandas as pd
-from PIL import Image
-import plotly.graph_objs as go
-from wordcloud import WordCloud
-from main import get_keywords
 import numpy as np
-import time
+import pandas as pd
+import plotly.graph_objs as go
+from PIL import Image
+from wordcloud import WordCloud
+
+from main import get_keywords
 
 key_words = get_keywords()[:9]
 
@@ -120,8 +120,8 @@ def create_graph(tpm, keywords):
     return graph
 
 
-def create_wc(tpm, keywords, wc_kwargs={"background_color":'white', "colormap":'plasma',
-              "width":1200, "height":800}):
+def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
+                                                  "width": 1200, "height": 800}) -> object:
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
@@ -135,12 +135,12 @@ def create_wc(tpm, keywords, wc_kwargs={"background_color":'white', "colormap":'
     wf = get_word_frequency(tpm, keywords)
     new_keywords = []
     for key in keywords:
-        if(wf[key] > 0):
+        if wf[key] > 0:
             new_keywords.append(key)
 
     keywords = new_keywords
     wf = {key:wf[key] for key in keywords}
-    if(len(wf) == 0):
+    if len(wf) == 0:
         return go.Figure()
     else:
         word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
