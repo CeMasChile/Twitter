@@ -157,7 +157,7 @@ class StreamListener(StreamListener):
             # MAKE IT A DICT AGAIN #
             json_obj = json.loads(json_str)
 
-            # print(json_obj)
+            print(json_obj)
 
             # Insert to db #
             coll.insert_one(json_obj)
@@ -167,7 +167,6 @@ class StreamListener(StreamListener):
             # Print the error
             print(e)
             # and continue
-            pass
 
         if self.csv:
             # Close the csv file

@@ -1,9 +1,7 @@
-import datetime
 import glob
 import os
 import sys
 import time
-from datetime import datetime
 
 import pandas as pd
 import json
@@ -124,4 +122,3 @@ def json_pandas(json_string):
 
 if __name__ == '__main__':
     df = read_mongo('dbTweets', 'tweets_chile', query_fields={"text": 1, "user": 1})
-    print(df)

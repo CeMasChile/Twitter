@@ -36,7 +36,7 @@ def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    if(wholedf is None):
+    if wholedf is None:
         wholedf = df
 
     wholedf.loc[:, column] = pd.to_datetime(wholedf[column], utc=True).dt.floor('min')
