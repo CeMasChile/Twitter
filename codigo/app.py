@@ -1,17 +1,20 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 from flask_caching import Cache
+import time
 
-import plotly.graph_objs as go
+from datetime import datetime, timedelta
 from dash.dependencies import Input, Output
 from multiprocessing import Process, Queue
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
-from utils_app import get_tpm, get_tpm_users, create_wc, get_username_list, get_users_indices
+from utils_app import get_tpm, get_tpm_users, create_graph, create_wc, get_username_list, get_users_indices
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -24,13 +27,36 @@ keywords = get_keywords()[:9]
 noticieros = get_username_list(dir_noticias)
 politicos = get_username_list(dir_politicos)
 
-time_interval = 120  # seconds
+time_interval = 30  # seconds
 
-json_data = None
-data_chile, data_prensa, data_politicos = {}, {}, {}
-wc_chile, wc_prensa, wc_politicos = go.Figure({}), go.Figure({}), go.Figure({})
+# dataframe with starting database
+df = json_pandas(
+    read_mongo('dbTweets', 'tweets_chile',
+               query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
+               json_only=True, num_limit=10**5)
+)
 
-queue = Queue()
+
+tpm_chile = get_tpm(df.copy(), keywords)
+datetime_chile = tpm_chile['All'].index.max()
+graph_chile = create_graph(tpm_chile, keywords)
+wc_chile = create_wc(tpm_chile, keywords)
+q_chile = Queue()
+
+tpm_prensa = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
+datetime_prensa = tpm_prensa['All'].index.max()
+graph_prensa = create_graph(tpm_prensa, keywords)
+wc_prensa = create_wc(tpm_prensa, keywords)
+q_prensa = Queue()
+
+tpm_politicos = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
+datetime_politicos = tpm_politicos['All'].index.max()
+graph_politicos = create_graph(tpm_politicos, keywords)
+wc_politicos = create_wc(tpm_politicos, keywords)
+q_politicos = Queue()
+
+
+max_length = 100
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -38,13 +64,13 @@ queue = Queue()
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-fig_tpm_prensa = dcc.Graph(id='plot-tweets-prensa')
-fig_tpm_chile = dcc.Graph(id='plot-tweets-chile')
-fig_tpm_politicos = dcc.Graph(id='plot-tweets-politicos')
+fig_tpm_chile = dcc.Graph(figure=graph_chile, id='plot-tweets-chile')
+fig_tpm_prensa = dcc.Graph(figure=graph_prensa, id='plot-tweets-prensa')
+fig_tpm_politicos = dcc.Graph(figure=graph_politicos, id='plot-tweets-politicos')
 
-fig_wc_prensa = dcc.Graph(id='word-cloud-prensa')
-fig_wc_chile = dcc.Graph(id='word-cloud-chile')
-fig_wc_politicos = dcc.Graph(id='word-cloud-politicos')
+fig_wc_chile = dcc.Graph(figure=wc_chile, id='word-cloud-chile')
+fig_wc_prensa = dcc.Graph(figure=wc_prensa, id='word-cloud-prensa')
+fig_wc_politicos = dcc.Graph(figure=wc_politicos, id='word-cloud-politicos')
 
 # Dash object
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -134,8 +160,50 @@ def global_store(num_limit=None):
                       json_only=True, num_limit=num_limit)
 
 
-def multiprocessing_wc(json_data, keywords, queue):
-    queue.put( create_wc(json_data, keywords) )
+def multiprocessing_wc(tpm, keywords, queue, test_without_wc=True):
+    queue.put( create_wc(tpm, keywords) )
+
+
+def update_tpm(df, keywords, tpm, datetime, return_changed=True):
+    tpm_changed = False
+    new_tpm = get_tpm(df.copy(), keywords)
+
+    for key in (keywords + ['All']):
+        # keep only new values of tweets_per_minute
+        new_tpm[key] = new_tpm[key].loc[new_tpm[key].index > datetime]
+        tpm_changed = len(new_tpm[key].index) > 0
+
+        tpm[key] = tpm[key].append(new_tpm[key])
+        if(len(tpm[key].index) > max_length):  # check tpm array max length
+            tpm[key] = tpm[key].iloc[-max_length:]
+
+    new_datetime = tpm['All'].index.max()
+
+    if(return_changed is True):
+        return tpm_changed, tpm, datetime
+    else:
+        return tpm, datetime
+
+
+def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
+    tpm_changed = False
+
+    new_tpm = get_tpm(df.loc[df['screenName'].isin(users)].copy(), keywords)
+    for key in (keywords + ['All']):
+        # keep only new values of tweets_per_minute
+        new_tpm[key] = new_tpm[key].loc[new_tpm[key].index > datetime]
+        tpm_changed = len(new_tpm[key].index) > 0
+
+        tpm[key] = tpm[key].append(new_tpm[key])
+        if(len(tpm[key].index) > max_length):  # check tpm array max length
+            tpm[key] = tpm[key].iloc[-max_length:]
+
+    datetime_prensa = tpm['All'].index.max()
+
+    if(return_changed is True):
+        return tpm_changed, tpm, datetime
+    else:
+        return tpm, datetime
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -146,125 +214,80 @@ def multiprocessing_wc(json_data, keywords, queue):
     [Input('interval', 'n_intervals')]
 )
 def compute_data(_):
-    global json_data
-    json_data = json_pandas(global_store(num_limit=None))
-    return None
+    return read_mongo('dbTweets', 'tweets_chile',
+                      query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
+                      json_only=True, num_limit=10**4)
 
 
 # tweets per minute callbacks
 @app.callback(
-    [Output('plot-tweets-prensa', 'figure'), Output('word-cloud-prensa', 'figure')],
-    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
+    [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile','figure')],
+    [Input('signal', 'children')]
 )
-def update_graphs_prensa(_, tab):
-    global data_prensa, wc_prensa
-    if(tab == 'tab-prensa' and json_data is not None):
-        p = Process(target=multiprocessing_wc, args=(json_data, keywords, queue))
+def update_chile(df):
+    global tpm_chile, datetime_chile, wc_chile, graph_chile
+
+    tpm_changed, tpm_chile, datetime_chile = \
+        update_tpm(json_pandas(df), keywords, tpm_chile, datetime_chile)
+
+    if(tpm_changed is True):
+        p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
         p.start()
 
-        noticias_indices = get_users_indices(json_data, noticieros)
-        tpm = get_tpm_users(json_data, noticias_indices, keywords)
+        graph_chile = create_graph(tpm_chile, keywords)
 
-        traces = [go.Scatter(x=tpm.index, y=tpm[col].values, mode='lines+markers',
-                  text=col, name=col) for col in keywords + ['All']]
-
-        data_prensa = {'data':traces}
-        wc_prensa = queue.get()
-
+        wc_chile = q_chile.get()
         p.join()
-        return go.Figure(data_prensa), wc_prensa
-    else:
-        return go.Figure(data_prensa), wc_prensa
+
+    return graph_chile, wc_chile
+
+
+@app.callback(
+    [Output('plot-tweets-prensa', 'figure'), Output('word-cloud-prensa', 'figure')],
+    [Input('signal', 'children')]
+)
+def update_graphs_prensa(df):
+    global tpm_prensa, datetime_prensa, wc_prensa, graph_prensa
+
+    tpm_changed, tpm_prensa, datetime_prensa = \
+        update_tpm_users(json_pandas(df), noticieros, keywords, tpm_prensa, datetime_prensa)
+
+    if(tpm_changed is True):
+        p = Process(target=multiprocessing_wc, args=(tpm_prensa, keywords, q_prensa))
+        p.start()
+
+        graph_prensa = create_graph(tpm_prensa, keywords)
+
+        wc_prensa = q_prensa.get()
+        p.join()
+
+    return graph_prensa, wc_prensa
 
 
 @app.callback(
     [Output('plot-tweets-politicos', 'figure'), Output('word-cloud-politicos', 'figure')],
-    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
+    [Input('signal', 'children')]
 )
-def update_graphs_politicos(_, tab):
-    global data_politicos, wc_politicos
-    if(tab == 'tab-politicos' and json_data is not None):
-        p = Process(target=multiprocessing_wc, args=(json_data, keywords, queue))
+def update_graphs_politicos(df):
+    global tpm_politicos, datetime_politicos, wc_politicos, graph_politicos
+
+    tpm_changed, tpm_politicos, datetime_politicos = \
+        update_tpm_users(json_pandas(df), politicos, keywords, tpm_politicos, datetime_politicos)
+
+    if(tpm_changed is True):
+        p = Process(target=multiprocessing_wc, args=(tpm_politicos, keywords, q_politicos))
         p.start()
 
-        idx = get_users_indices(json_data, politicos)
-        tpm = get_tpm_users(json_data, idx, keywords)
+        graph_politicos = create_graph(tpm_politicos, keywords)
 
-        traces = [go.Scatter(x=tpm.index, y=tpm[col].values, mode='lines+markers',
-                  text=col, name=col) for col in keywords + ['All']]
-
-        data_politicos = {'data':traces}
-        wc_politicos = queue.get()
-
+        wc_politicos = q_politicos.get()
         p.join()
-        return go.Figure(data_politicos), wc_politicos
-    else:
-        return go.Figure(data_politicos), wc_politicos
+
+    return graph_politicos, wc_politicos
 
 
-@app.callback(
-    [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile','figure')],
-    [Input('signal', 'children'), Input('tabs-graphs', 'value')]
-)
-def update_graphs_chile(_, tab):
-    global data_chile, wc_chile
-    if(tab == 'tab-chile' and json_data is not None):
-        p = Process(target=multiprocessing_wc, args=(json_data, keywords, queue))
-        p.start()
-
-        tpm = get_tpm(json_data, keywords)
-
-        traces = [go.Scatter(x=tpm[key].index, y=tpm[key]['dateTweet'].values,
-                  mode='lines+markers', text=key, name=key)
-                  for key in keywords + ['All']]
-
-        data_chile = {'data': traces}
-        wc_chile = queue.get()
-
-        p.join()
-        return go.Figure(data_chile), wc_chile
-    else:
-        return go.Figure(data_chile), wc_chile
-
-
-# # WordCloud callbacks
-# @app.callback(
-#     Output('word-cloud-prensa', 'figure'),
-#     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
-# )
-# def update_wc_prensa(_, tab):
-#     global wc_prensa
-#     if(tab == 'tab-prensa' and json_data is not None):
-#         wc_prensa = create_wc(json_data, keywords)
-#         return wc_prensa
-#     else:
-#         return wc_prensa
-#
-#
-# @app.callback(
-#     Output('word-cloud-politicos', 'figure'),
-#     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
-# )
-# def update_wc_politicos(_, tab):
-#     global wc_politicos
-#     if(tab == 'tab-politicos' and json_data is not None):
-#         wc_politicos = create_wc(json_data, keywords)
-#         return wc_politicos
-#     else:
-#         return wc_politicos
-#
-# @app.callback(
-#     Output('word-cloud-chile', 'figure'),
-#     [Input('signal', 'children'), Input('tabs-graphs', 'value')]
-# )
-# def update_wc_chile(_, tab):
-#     global wc_chile
-#     if(tab == 'tab-chile' and json_data is not None):
-#         wc_chile = create_wc(json_data, keywords)
-#         return wc_chile
-#     else:
-#         return wc_chile
-
-
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# main
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(port=3000, debug=True)

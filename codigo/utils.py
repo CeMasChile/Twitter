@@ -25,7 +25,7 @@ def parse_tweet(j):
     into a JSON formatted string.
     :param j: dict
     """
-    
+
     # Retrieve full text in case it is truncated
     if "retweeted_status" in j.keys():
         try:
@@ -37,7 +37,7 @@ def parse_tweet(j):
             text = j["extended_tweet"]["full_text"]
         except KeyError:
             text =  j["text"]
-    
+
     # Create custom json with only the useful info.
     try:
         tt = {'dateTweet': j['created_at'],
@@ -102,13 +102,13 @@ def read_mongo(db, collection, query_condition={}, query_fields={}, host='localh
     if no_id:
         suppress = 0
 
-    query_fields["_id"] = suppress
+    # query_fields["_id"] = suppress
 
     # Make a query to the specific DB and Collection
-    if num_limit is None:
+    if(num_limit is None):
         cursor = db[collection].find(query_condition, query_fields)
     else:
-        cursor = db[collection].find(query_condition, query_fields).limit(num_limit)
+        cursor = db[collection].find(query_condition, query_fields).sort('_id',-1).limit(num_limit)
 
     # JSON return
     if json_only:
