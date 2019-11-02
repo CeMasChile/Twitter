@@ -14,7 +14,7 @@ from multiprocessing import Process, Queue
 
 from utils import get_latest_output, read_mongo, json_pandas
 from main import get_keywords
-from utils_app import get_tpm, get_tpm_users, create_graph, create_wc, get_username_list, get_users_indices
+from utils_app import get_tpm, create_graph, create_wc, get_username_list, get_users_indices
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -49,14 +49,14 @@ graph_prensa = create_graph(tpm_prensa, keywords)
 wc_prensa = create_wc(tpm_prensa, keywords)
 q_prensa = Queue()
 
-tpm_politicos = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
+tpm_politicos = get_tpm(df.loc[df['screenName'].isin(politicos)].copy(), keywords)
 datetime_politicos = tpm_politicos['All'].index.max()
 graph_politicos = create_graph(tpm_politicos, keywords)
 wc_politicos = create_wc(tpm_politicos, keywords)
 q_politicos = Queue()
 
 
-max_length = 100
+max_length = 100  # maximum number of points to plot
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -75,13 +75,12 @@ fig_wc_politicos = dcc.Graph(figure=wc_politicos, id='word-cloud-politicos')
 # Dash object
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-CACHE_CONFIG = {
-    'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': 'cache-directory'
-}
-cache = Cache()
-cache.init_app(app.server, config=CACHE_CONFIG)
+# CACHE_CONFIG = {
+#     'CACHE_TYPE': 'filesystem',
+#     'CACHE_DIR': 'cache-directory'
+# }
+# cache = Cache()
+# cache.init_app(app.server, config=CACHE_CONFIG)
 
 
 # layout for Dash object
@@ -152,7 +151,7 @@ app.layout = html.Div([
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-@cache.memoize()
+# @cache.memoize()
 def global_store(num_limit=None):
     # Read data from db and return json
     return read_mongo('dbTweets', 'tweets_chile',

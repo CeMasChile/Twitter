@@ -98,6 +98,7 @@ def get_pandas_dict(df, keywords):
     DD['All'] = df
     return DD
 
+
 def get_word_frequency(tpm, keywords):
     """
     Count how many tweets contain a given word
