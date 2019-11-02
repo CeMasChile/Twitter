@@ -37,14 +37,14 @@ def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
     '''
-    if(wholedf is None):
+    if wholedf is None:
         wholedf = df
 
     wholedf.loc[:, column] = pd.to_datetime(wholedf[column], utc=True).dt.floor('min')
     index_frecuencia_tweets = \
         pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
 
-    if key_words == None:
+    if key_words is None:
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
         frecuencia_tweets = pd.DataFrame(df[column].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets.reindex(index_frecuencia_tweets).fillna(0)
@@ -54,6 +54,7 @@ def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
         DTime = {key: DTime[key].reindex(index_frecuencia_tweets).fillna(0) for key in DTime}
         return DTime
 
+
 def get_users_indices(df, users, col='screenName'):
     '''
     crea una lista con los indices correspondientes a cada todos los usuarios solicitados
@@ -62,7 +63,6 @@ def get_users_indices(df, users, col='screenName'):
     :return: devuelve una lista con las caracteristicas descritas
     '''
     return df[df[col].isin(users)].index
-
 
 
 def get_tpm_users(df, indexes, key_words):
@@ -97,6 +97,7 @@ def get_pandas_dict(df, keywords):
     DD['All'] = df
     return DD
 
+
 def get_word_frequency(df, wordlist):
     """
     Count how many tweets contain a given word
@@ -112,8 +113,8 @@ def get_word_frequency(df, wordlist):
     return word_freq
 
 
-def create_wc(df, wordlist, wc_kwargs={"background_color":'white', "colormap":'plasma',
-              "width":1200, "height":800}):
+def create_wc(df, wordlist, wc_kwargs={"background_color": 'white', "colormap": 'plasma',
+                                       "width": 1200, "height": 800}):
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.

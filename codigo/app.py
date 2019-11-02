@@ -2,7 +2,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import warnings
-warnings.filterwarnings('ignore')
+#warnings.filterwarnings('ignore')
 from flask_caching import Cache
 import time
 
@@ -152,7 +152,7 @@ def compute_data(_):
 )
 def update_graphs_prensa(_, tab):
     global data_prensa
-    if(tab == 'tab-prensa' and json_data is not None):
+    if tab == 'tab-prensa' and json_data is not None:
         noticias_indices = get_users_indices(json_data, noticieros)
         tpm = get_tpm_users(json_data, noticias_indices, keywords)
 
@@ -171,7 +171,7 @@ def update_graphs_prensa(_, tab):
 )
 def update_graphs_politicos(_, tab):
     global data_politicos
-    if(tab == 'tab-politicos' and json_data is not None):
+    if tab == 'tab-politicos' and json_data is not None:
         idx = get_users_indices(json_data, politicos)
         tpm = get_tpm_users(json_data, idx, keywords)
 
@@ -190,7 +190,7 @@ def update_graphs_politicos(_, tab):
 )
 def update_graphs_chile(_, tab):
     global data_chile
-    if(tab == 'tab-chile' and json_data is not None):
+    if tab == 'tab-chile' and json_data is not None:
         tpm = get_tpm(json_data, keywords)
 
         traces = [go.Scatter(x=tpm[key].index, y=tpm[key]['dateTweet'].values,
@@ -210,7 +210,7 @@ def update_graphs_chile(_, tab):
 )
 def update_wc_prensa(_, tab):
     global wc_prensa
-    if(tab == 'tab-prensa' and json_data is not None):
+    if tab == 'tab-prensa' and json_data is not None:
         wc_prensa = create_wc(json_data, keywords)
         return wc_prensa
     else:
@@ -223,7 +223,7 @@ def update_wc_prensa(_, tab):
 )
 def update_wc_politicos(_, tab):
     global wc_politicos
-    if(tab == 'tab-politico' and json_data is not None):
+    if tab == 'tab-politico' and json_data is not None:
         wc_politicos = create_wc(json_data, keywords)
         return wc_politicos
     else:
