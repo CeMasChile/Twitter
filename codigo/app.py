@@ -165,7 +165,7 @@ def multiprocessing_wc(tpm, keywords, queue, test_without_wc=True):
 
 def update_tpm(df, keywords, tpm, datetime, return_changed=True):
     tpm_changed = False
-    new_tpm = get_tpm(df.copy(), keywords)
+    new_tpm = get_tpm(df, keywords)
 
     for key in (keywords + ['All']):
         # keep only new values of tweets_per_minute
@@ -179,15 +179,16 @@ def update_tpm(df, keywords, tpm, datetime, return_changed=True):
     new_datetime = tpm['All'].index.max()
 
     if(return_changed is True):
-        return tpm_changed, tpm, datetime
+        return tpm_changed, tpm, new_datetime
     else:
-        return tpm, datetime
+        return tpm, new_datetime
 
 
 def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
     tpm_changed = False
 
-    new_tpm = get_tpm(df.loc[df['screenName'].isin(users)].copy(), keywords)
+    df_user = df.loc[df['screenName'].isin(users)]
+    new_tpm = get_tpm(df_user, keywords)
     for key in (keywords + ['All']):
         # keep only new values of tweets_per_minute
         new_tpm[key] = new_tpm[key].loc[new_tpm[key].index > datetime]
@@ -197,12 +198,12 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
         if(len(tpm[key].index) > max_length):  # check tpm array max length
             tpm[key] = tpm[key].iloc[-max_length:]
 
-    datetime_prensa = tpm['All'].index.max()
+    new_datetime = tpm['All'].index.max()
 
     if(return_changed is True):
-        return tpm_changed, tpm, datetime
+        return tpm_changed, tpm, new_datetime
     else:
-        return tpm, datetime
+        return tpm, new_datetime
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -215,7 +216,7 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
 def compute_data(_):
     return read_mongo('dbTweets', 'tweets_chile',
                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-                      json_only=True, num_limit=10**4)
+                      json_only=True, num_limit=10**5)
 
 
 # tweets per minute callbacks
@@ -223,11 +224,13 @@ def compute_data(_):
     [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile','figure')],
     [Input('signal', 'children')]
 )
-def update_chile(df):
+def update_chile(data):
     global tpm_chile, datetime_chile, wc_chile, graph_chile
 
+    # print(json_pandas(data))
     tpm_changed, tpm_chile, datetime_chile = \
-        update_tpm(json_pandas(df), keywords, tpm_chile, datetime_chile)
+        update_tpm(json_pandas(data).copy(), keywords, tpm_chile, datetime_chile)
+    # print(tpm_chile['All'])
 
     if(tpm_changed is True):
         p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
@@ -245,11 +248,11 @@ def update_chile(df):
     [Output('plot-tweets-prensa', 'figure'), Output('word-cloud-prensa', 'figure')],
     [Input('signal', 'children')]
 )
-def update_graphs_prensa(df):
+def update_graphs_prensa(data):
     global tpm_prensa, datetime_prensa, wc_prensa, graph_prensa
 
     tpm_changed, tpm_prensa, datetime_prensa = \
-        update_tpm_users(json_pandas(df), noticieros, keywords, tpm_prensa, datetime_prensa)
+        update_tpm_users(json_pandas(data).copy(), noticieros, keywords, tpm_prensa, datetime_prensa)
 
     if(tpm_changed is True):
         p = Process(target=multiprocessing_wc, args=(tpm_prensa, keywords, q_prensa))
@@ -267,11 +270,11 @@ def update_graphs_prensa(df):
     [Output('plot-tweets-politicos', 'figure'), Output('word-cloud-politicos', 'figure')],
     [Input('signal', 'children')]
 )
-def update_graphs_politicos(df):
+def update_graphs_politicos(data):
     global tpm_politicos, datetime_politicos, wc_politicos, graph_politicos
 
     tpm_changed, tpm_politicos, datetime_politicos = \
-        update_tpm_users(json_pandas(df), politicos, keywords, tpm_politicos, datetime_politicos)
+        update_tpm_users(json_pandas(data).copy(), politicos, keywords, tpm_politicos, datetime_politicos)
 
     if(tpm_changed is True):
         p = Process(target=multiprocessing_wc, args=(tpm_politicos, keywords, q_politicos))
