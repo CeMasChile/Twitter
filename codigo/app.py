@@ -23,7 +23,7 @@ from utils_app import get_tpm, create_graph, create_wc, get_username_list, get_u
 dir_noticias = 'data/Noticieros Twitter.csv'
 dir_politicos = 'data/Politicos-Twitter.csv'
 
-keywords = get_keywords()[:9]
+keywords = get_keywords()[:50]
 noticieros = get_username_list(dir_noticias)
 politicos = get_username_list(dir_politicos)
 
@@ -39,19 +39,19 @@ df = json_pandas(
 
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
-graph_chile = create_graph(tpm_chile, keywords)
+graph_chile = create_graph(tpm_chile, keywords[:9])
 wc_chile = create_wc(tpm_chile, keywords)
 q_chile = Queue()
 
 tpm_prensa = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
 datetime_prensa = tpm_prensa['All'].index.max()
-graph_prensa = create_graph(tpm_prensa, keywords)
+graph_prensa = create_graph(tpm_prensa, keywords[:9])
 wc_prensa = create_wc(tpm_prensa, keywords)
 q_prensa = Queue()
 
 tpm_politicos = get_tpm(df.loc[df['screenName'].isin(politicos)].copy(), keywords)
 datetime_politicos = tpm_politicos['All'].index.max()
-graph_politicos = create_graph(tpm_politicos, keywords)
+graph_politicos = create_graph(tpm_politicos, keywords[:9])
 wc_politicos = create_wc(tpm_politicos, keywords)
 q_politicos = Queue()
 
@@ -224,7 +224,7 @@ def compute_data(_):
     [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile','figure')],
     [Input('signal', 'children')]
 )
-def update_chile(data):
+def update_graphs_chile(data):
     global tpm_chile, datetime_chile, wc_chile, graph_chile
 
     # print(json_pandas(data))
@@ -236,7 +236,7 @@ def update_chile(data):
         p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
         p.start()
 
-        graph_chile = create_graph(tpm_chile, keywords)
+        graph_chile = create_graph(tpm_chile, keywords[:9])
 
         wc_chile = q_chile.get()
         p.join()
@@ -258,7 +258,7 @@ def update_graphs_prensa(data):
         p = Process(target=multiprocessing_wc, args=(tpm_prensa, keywords, q_prensa))
         p.start()
 
-        graph_prensa = create_graph(tpm_prensa, keywords)
+        graph_prensa = create_graph(tpm_prensa, keywords[:9])
 
         wc_prensa = q_prensa.get()
         p.join()
@@ -280,7 +280,7 @@ def update_graphs_politicos(data):
         p = Process(target=multiprocessing_wc, args=(tpm_politicos, keywords, q_politicos))
         p.start()
 
-        graph_politicos = create_graph(tpm_politicos, keywords)
+        graph_politicos = create_graph(tpm_politicos, keywords[:9])
 
         wc_politicos = q_politicos.get()
         p.join()

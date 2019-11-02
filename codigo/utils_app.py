@@ -6,8 +6,6 @@ from main import get_keywords
 import numpy as np
 import time
 
-key_words = get_keywords()[:9]
-
 
 def get_users(direction):
     '''
@@ -23,15 +21,15 @@ def get_time_text(direction):
     pd.read_csv(direction, usecols=['dateTweet', 'tweet'])
 
 
-def get_kw_dict(df, col='tweet'):
+def get_kw_dict(df, keywords, col='tweet'):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {kw: df[df[col].str.contains(kw)].index for kw in key_words}
+    return {kw: df[df[col].str.contains(kw)].index for kw in keywords}
 
 
-def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
+def get_tpm(df, keywords=None, column='dateTweet', wholedf=None):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
@@ -43,12 +41,12 @@ def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
     index_frecuencia_tweets = \
         pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
 
-    if(key_words is None):
+    if(keywords is None):
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
         frecuencia_tweets = pd.DataFrame(df[column].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets.reindex(index_frecuencia_tweets).fillna(0)
     else:
-        pandas_dict = get_pandas_dict(df, key_words)
+        pandas_dict = get_pandas_dict(df, keywords)
         DTime = {key: get_tpm(pandas_dict[key]) for key in pandas_dict}
         DTime = {key: DTime[key].reindex(index_frecuencia_tweets).fillna(0) for key in DTime}
         return DTime
@@ -78,7 +76,7 @@ def get_tpm_users(df, users, keywords):
     politicosdf = df.iloc[indices].filter(['tweet', 'dateTweet'])
     politicosdf['All'] = 1
 
-    for word in key_words:
+    for word in keywords:
         politicosdf[word] = politicosdf['tweet'].str.contains(word).astype(int)
     politicosdf = politicosdf.loc[:, politicosdf.columns != 'tweet']
     politicosdf = politicosdf.groupby('dateTweet').sum()
@@ -93,7 +91,7 @@ def get_pandas_dict(df, keywords):
     :param keywords: keywords para buscar
     :return: devuelve un diccionario con las caracteristicas descritas
     '''
-    kwdic = get_kw_dict(df)
+    kwdic = get_kw_dict(df, keywords)
     DD = {key: df.ix[kwdic[key]] for key in keywords}
     DD['All'] = df
     return DD
