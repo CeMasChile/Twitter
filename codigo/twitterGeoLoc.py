@@ -85,7 +85,7 @@ class StreamListener(StreamListener):
         """
 
         global writer, file
-        
+
         if self.csv:
             # Open the csv file created previously
             file = open(self.filename, 'a')
@@ -94,20 +94,20 @@ class StreamListener(StreamListener):
 
 
         try:
-            
+
             # Retrieve full text in case it is truncated
             if hasattr(status, "retweeted_status"):
                 try:
                     text = status.retweeted_status.extended_tweet["full_text"]
                 except AttributeError:
                     text = status.retweeted_status.text
-            
+
             else:
                 try:
                     text = status.extended_tweet['full_text']
                 except AttributeError:
                     text = status.text
-              
+
             hash_tags = extract_hash_tags(text)
 
             # Write the tweet's information to the csv file
@@ -157,7 +157,7 @@ class StreamListener(StreamListener):
             # MAKE IT A DICT AGAIN #
             json_obj = json.loads(json_str)
 
-            print(json_obj)
+            # print(json_obj)
 
             # Insert to db #
             coll.insert_one(json_obj)

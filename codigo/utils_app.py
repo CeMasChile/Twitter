@@ -94,7 +94,7 @@ def get_pandas_dict(df, keywords):
     :return: devuelve un diccionario con las caracteristicas descritas
     '''
     kwdic = get_kw_dict(df)
-    DD = {word: df.iloc[kwdic[word]] for word in keywords}
+    DD = {key: df.ix[kwdic[key]] for key in keywords}
     DD['All'] = df
     return DD
 
