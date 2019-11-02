@@ -16,7 +16,7 @@ from utils_app import get_tpm, create_graph, create_wc, get_username_list
 dir_noticias = 'data/Noticieros Twitter.csv'
 dir_politicos = 'data/Politicos-Twitter.csv'
 
-keywords = get_keywords()[:9]
+keywords = get_keywords()[:50]
 noticieros = get_username_list(dir_noticias)
 politicos = get_username_list(dir_politicos)
 
@@ -31,19 +31,19 @@ df = json_pandas(
 
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
-graph_chile = create_graph(tpm_chile, keywords)
+graph_chile = create_graph(tpm_chile, keywords[:9])
 wc_chile = create_wc(tpm_chile, keywords)
 q_chile = Queue()
 
 tpm_prensa = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
 datetime_prensa = tpm_prensa['All'].index.max()
-graph_prensa = create_graph(tpm_prensa, keywords)
+graph_prensa = create_graph(tpm_prensa, keywords[:9])
 wc_prensa = create_wc(tpm_prensa, keywords)
 q_prensa = Queue()
 
 tpm_politicos = get_tpm(df.loc[df['screenName'].isin(politicos)].copy(), keywords)
 datetime_politicos = tpm_politicos['All'].index.max()
-graph_politicos = create_graph(tpm_politicos, keywords)
+graph_politicos = create_graph(tpm_politicos, keywords[:9])
 wc_politicos = create_wc(tpm_politicos, keywords)
 q_politicos = Queue()
 
@@ -158,7 +158,8 @@ def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
 
 def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     tpm_changed = False
-    new_tpm = get_tpm(data_frame.copy(), kws)
+
+    new_tpm = get_tpm(data_frame, keywords)
 
     for key in (kws + ['All']):
         # keep only new values of tweets_per_minute
@@ -174,13 +175,15 @@ def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     if return_changed is True:
         return tpm_changed, tpm, new_datetime
     else:
-        return tpm, datetime
+        return tpm, new_datetime
 
 
-def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
+def update_tpm_users(data_frame, users, keywords, tpm, datetime, return_changed=True):
     tpm_changed = False
 
-    new_tpm = get_tpm(df.loc[df['screenName'].isin(users)].copy(), keywords)
+    df_user = data_frame.loc[data_frame['screenName'].isin(users)]
+    new_tpm = get_tpm(df_user, keywords)
+
     for key in (keywords + ['All']):
         # keep only new values of tweets_per_minute
         new_tpm[key] = new_tpm[key].loc[new_tpm[key].index > datetime]
@@ -190,12 +193,12 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
         if len(tpm[key].index) > max_length:  # check tpm array max length
             tpm[key] = tpm[key].iloc[-max_length:]
 
-    datetime_prensa = tpm['All'].index.max()
+    new_datetime = tpm['All'].index.max()
 
     if return_changed is True:
-        return tpm_changed, tpm, datetime_prensa
+        return tpm_changed, tpm, new_datetime
     else:
-        return tpm, datetime
+        return tpm, new_datetime
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -208,25 +211,26 @@ def update_tpm_users(df, users, keywords, tpm, datetime, return_changed=True):
 def compute_data(_):
     return read_mongo('dbTweets', 'tweets_chile',
                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-                      json_only=True, num_limit=10 ** 4)
-
+                      json_only=True, num_limit=10**5)
 
 # tweets per minute callbacks
 @app.callback(
     [Output('plot-tweets-chile', 'figure'), Output('word-cloud-chile', 'figure')],
     [Input('signal', 'children')]
 )
-def update_chile(df):
+def update_graphs_chile(data):
     global tpm_chile, datetime_chile, wc_chile, graph_chile
 
+    # print(json_pandas(data))
     tpm_changed, tpm_chile, datetime_chile = \
-        update_tpm(json_pandas(df), keywords, tpm_chile, datetime_chile)
+        update_tpm(json_pandas(data).copy(), keywords, tpm_chile, datetime_chile)
+    # print(tpm_chile['All'])
 
     if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
         p.start()
 
-        graph_chile = create_graph(tpm_chile, keywords)
+        graph_chile = create_graph(tpm_chile, keywords[:9])
 
         wc_chile = q_chile.get()
         p.join()
@@ -238,17 +242,17 @@ def update_chile(df):
     [Output('plot-tweets-prensa', 'figure'), Output('word-cloud-prensa', 'figure')],
     [Input('signal', 'children')]
 )
-def update_graphs_prensa(df):
+def update_graphs_prensa(data):
     global tpm_prensa, datetime_prensa, wc_prensa, graph_prensa
 
     tpm_changed, tpm_prensa, datetime_prensa = \
-        update_tpm_users(json_pandas(df), noticieros, keywords, tpm_prensa, datetime_prensa)
+        update_tpm_users(json_pandas(data).copy(), noticieros, keywords, tpm_prensa, datetime_prensa)
 
     if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_prensa, keywords, q_prensa))
         p.start()
 
-        graph_prensa = create_graph(tpm_prensa, keywords)
+        graph_prensa = create_graph(tpm_prensa, keywords[:9])
 
         wc_prensa = q_prensa.get()
         p.join()
@@ -260,17 +264,17 @@ def update_graphs_prensa(df):
     [Output('plot-tweets-politicos', 'figure'), Output('word-cloud-politicos', 'figure')],
     [Input('signal', 'children')]
 )
-def update_graphs_politicos(df):
+def update_graphs_politicos(data):
     global tpm_politicos, datetime_politicos, wc_politicos, graph_politicos
 
     tpm_changed, tpm_politicos, datetime_politicos = \
-        update_tpm_users(json_pandas(df), politicos, keywords, tpm_politicos, datetime_politicos)
+        update_tpm_users(json_pandas(data).copy(), politicos, keywords, tpm_politicos, datetime_politicos)
 
     if tpm_changed is True:
         p = Process(target=multiprocessing_wc, args=(tpm_politicos, keywords, q_politicos))
         p.start()
 
-        graph_politicos = create_graph(tpm_politicos, keywords)
+        graph_politicos = create_graph(tpm_politicos, keywords[:9])
 
         wc_politicos = q_politicos.get()
         p.join()
