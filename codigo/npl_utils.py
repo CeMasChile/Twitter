@@ -1,6 +1,7 @@
 import re
+from collections import Counter
 from gensim.utils import deaccent
-
+from emoji import get_emoji_regexp
 ####################
 # Global variables
 ####################
@@ -15,18 +16,22 @@ stopwords = frozenset(stopwords)
 
 # regexp for matching @usernames and #hashtags
 tw_handles = r"([@][A-z]+)|([#][A-z]+)"
-
-# regexp for matching URLs
+# for matching URLs
 urls = r"((\w+:\/\/)[-a-zA-Z0-9:@;?&=\/%\+\.\*!'\(\),\$_\{\}\^~\[\]`#|]+)"
+# for matching numbers
+numbers = r"[^a-z ]\ *([.0-9])*\d"
+# for matching emojis
+emojis = get_emoji_regexp().pattern
 
-multi_pattern = '|'.join([tw_handles, urls])
-# regexp for Twitter Handles or URLs/URIs
+# Master Regexp
+multi_pattern = '|'.join([tw_handles, urls, numbers, emojis])
 non_plain_re = re.compile(multi_pattern, re.UNICODE)
 ####################
 
 def remove_non_plain(document):
     """
-    Replaces urls, @usernames and #tags with an empty string
+    Replaces urls, @usernames, #tags, emojis and numbers
+    with an empty string.
     :param document: string
     """
     return non_plain_re.sub('', document)
@@ -38,34 +43,35 @@ def strip_punctuation(token):
     from a given token
     :param token: string
     """
-    return deaccent(token).strip('",.:;?¿-()[]<>!¡“”| ')
+    return deaccent(token).strip('",.:;?¿-()[]<>!¡“”|*/\=+&$% ')
 
 def process(document):
     """
     Tokenize a document (a tweet) removing:
-    - punctuation 
-    - URLs and Twitter handles 
+    - punctuation
+    - URLs and Twitter handles
     - Uppercases
-    - Stopword 
-    - Whitespace 
+    - Stopword
+    - Whitespace
     :param document: string
     :returns: a list of strings
     """
     wordbag = list()
     for token in remove_non_plain(document).lower().split():
         token = strip_punctuation(token)
-        if token not in stopwords and token != '':
+        if token not in stopwords and token != '' \
+           and token != 'rt':
             wordbag.append(token)
     return wordbag
 
-def build_counter(doc_stream):
+def init_counter(corpus):
     """
     Creates a collections.Counter object from a corpus.
-    :param doc_stream: iterator or iterable of lists of strings
+    :param corpus: iterator or iterable of lists of strings
     :returns: Counter
     """
     ctr = Counter()
-    for document in doc_stream:
+    for document in corpus:
         ctr.update(document)
-     
+
     return ctr

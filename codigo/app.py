@@ -9,6 +9,7 @@ from multiprocessing import Process, Queue
 from utils import read_mongo, json_pandas
 from main import get_keywords
 from utils_app import get_tpm, create_graph, create_wc, get_username_list
+from npl_utils import init_counter
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # global variables
@@ -28,6 +29,8 @@ df = json_pandas(
                query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
                json_only=True, num_limit=10 ** 5)
 )
+
+word_counter = init_counter(df['tweet'])
 
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
@@ -155,6 +158,8 @@ def global_store(num_limit=None):
 def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
     queue.put(create_wc(tpm, kws))
 
+def update_counter(data_frame):
+    pass
 
 def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     tpm_changed = False
