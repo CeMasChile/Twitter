@@ -1,3 +1,4 @@
+#!/home/cemas/Twitter/codigo/env/bin/python
 import csv
 import sys
 import time
@@ -13,10 +14,10 @@ from utils import extract_hash_tags, parse_tweet
 from pymongo import MongoClient
 import json
 
-csv_prompt = input("Quiere crear un .csv?: [Y/n] ").lower()
+csv_prompt = "n"
 
-if csv_prompt == "":
-    csv_prompt = "y"
+#if csv_prompt == "":
+#    csv_prompt = "y"
 
 # Region #
 region = config.region_CHILE
@@ -157,7 +158,7 @@ class StreamListener(StreamListener):
             # MAKE IT A DICT AGAIN #
             json_obj = json.loads(json_str)
 
-            print(json_obj)
+            #print(json_obj)
 
             # Insert to db #
             coll.insert_one(json_obj)

@@ -11,7 +11,7 @@ def get_keywords():
     Returns a Python list of strings read from the file kw.csv'
     """
     # Abrimos las keywords como string
-    keywordfile = io.open('./kw.csv').read()
+    keywordfile = io.open('/home/cemas/Twitter/codigo/kw.csv').read()
 
     #Convertimos a lista de Python
     keywords = keywordfile.split(', ')
