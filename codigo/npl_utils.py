@@ -1,7 +1,7 @@
 import re
 from collections import Counter
-from gensim.utils import deaccent
-from emoji import get_emoji_regexp
+from gensim.utils import deaccent, to_unicode
+import  gensim.parsing.preprocessing as proc
 ####################
 # Global variables
 ####################
@@ -18,32 +18,28 @@ stopwords = frozenset(stopwords)
 tw_handles = r"([@][A-z]+)|([#][A-z]+)"
 # for matching URLs
 urls = r"((\w+:\/\/)[-a-zA-Z0-9:@;?&=\/%\+\.\*!'\(\),\$_\{\}\^~\[\]`#|]+)"
-# for matching numbers
-numbers = r"[^a-z ]\ *([.0-9])*\d"
-# for matching emojis
-emojis = get_emoji_regexp().pattern
-
+punctuation_es = r'([!¡"\#\$%\&\'\(\)\*\+,\-\./:;<=>\?\¿@\[\\\]\^_`\{\|\}\~])+'
 # Master Regexp
-multi_pattern = '|'.join([tw_handles, urls, numbers, emojis])
+multi_pattern = '|'.join([tw_handles, urls, punctuation_es])
 non_plain_re = re.compile(multi_pattern, re.UNICODE)
 ####################
 
 def remove_non_plain(document):
     """
     Replaces urls, @usernames, #tags, emojis and numbers
-    with an empty string.
+    with a ' ' (space). Also removes accents and punctuation
+    to finally remove redundant whitespace and lowercase all
+    characters
     :param document: string
+    :return: processed unicode string
     """
-    return non_plain_re.sub('', document)
-
-
-def strip_punctuation(token):
-    """
-    Remove accents and trailing punctuation marks
-    from a given token
-    :param token: string
-    """
-    return deaccent(token).strip('",.:;?¿-()[]<>!¡“”|*/\=+&$% ')
+    document = to_unicode(document)
+    document = non_plain_re.sub(' ', document)
+    document = proc.strip_non_alphanum(document)
+    document = proc.strip_numeric(document)
+    document = proc.strip_multiple_whitespaces(document)
+    document = deaccent(document)
+    return document.lower()
 
 def process(document):
     """
@@ -57,8 +53,7 @@ def process(document):
     :returns: a list of strings
     """
     wordbag = list()
-    for token in remove_non_plain(document).lower().split():
-        token = strip_punctuation(token)
+    for token in set(remove_non_plain(document).split()):
         if token not in stopwords and token != '' \
            and token != 'rt':
             wordbag.append(token)
@@ -71,7 +66,7 @@ def init_counter(corpus):
     :returns: Counter
     """
     ctr = Counter()
-    for document in corpus:
-        ctr.update(document)
+    for worbag in corpus:
+        ctr.update(worbag)
 
     return ctr
