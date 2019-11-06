@@ -150,14 +150,19 @@ app.layout = html.Div([
 # functions
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # @cache.memoize()
-def global_store(num_limit=None):
-    # Read data from db and return json
-    return read_mongo('dbTweets', 'tweets_chile',
-                      query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-                      json_only=True, num_limit=num_limit)
+# def global_store(num_limit=None):
+#     """
+#     Read data from mongo with cache.
+#     """
+#     return read_mongo('dbTweets', 'tweets_chile',
+#                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
+#                       json_only=True, num_limit=num_limit)
 
 
 def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
+    """
+    function that enables to create WordCloud in a different process.
+    """
     queue.put(create_wc(tpm, kws))
 
 def multiprocessing_wc2(counter, queue):
@@ -174,6 +179,20 @@ def update_counter(data_frame):
     return init_counter(twiterator)
 
 def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
+    """
+    updates tweets-per-minute with new data_frame.
+
+    Params:
+        data_frame (pd.DataFrame): data of tweets.
+        tpm (dict(int[:])): dictionary with tweets-per-minute for different keywords.
+        kws (str[:]): list of keywords.
+        datetime (Datetime): last datetime in tpm.
+
+    Returns:
+        tpm_changed (bool): bool that says if tpm changed in the process or not.
+        tpm (dict(int[:])): new dictionary of tweets-per-minute.
+        new_datetime (Datetime): new datetime value.
+    """
     tpm_changed = False
 
     new_tpm = get_tpm(data_frame, keywords)
@@ -196,6 +215,21 @@ def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
 
 
 def update_tpm_users(data_frame, users, keywords, tpm, datetime, return_changed=True):
+    """
+    updates tweets-per-minute with new data_frame for tweets that come from certain users.
+
+    Params:
+        data_frame (pd.DataFrame): data of tweets.
+        user (str[:]): list of usernames used to filter data_frame.
+        tpm (dict(int[:])): dictionary with tweets-per-minute for different keywords.
+        kws (str[:]): list of keywords.
+        datetime (Datetime): last datetime in tpm.
+
+    Returns:
+        tpm_changed (bool): bool that says if tpm changed in the process or not.
+        tpm (dict(int[:])): new dictionary of tweets-per-minute.
+        new_datetime (Datetime): new datetime value.
+    """
     tpm_changed = False
 
     df_user = data_frame.loc[data_frame['screenName'].isin(users)]
@@ -226,6 +260,9 @@ def update_tpm_users(data_frame, users, keywords, tpm, datetime, return_changed=
     [Input('interval', 'n_intervals')]
 )
 def compute_data(_):
+    """
+    function that will be triggerd after every "time_interval".  It reads the data from mongo and returns it.
+    """
     return read_mongo('dbTweets', 'tweets_chile',
                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
                       json_only=True, num_limit=10**5)
@@ -236,12 +273,13 @@ def compute_data(_):
     [Input('signal', 'children')]
 )
 def update_graphs_chile(data):
+    """
+    When compute_data() returns the data read from mongo.  The plot and wordcloud of "tab-chile" will be updated.
+    """
     global tpm_chile, datetime_chile, wc_chile, graph_chile
 
-    # print(json_pandas(data))
     tpm_changed, tpm_chile, datetime_chile = \
         update_tpm(json_pandas(data).copy(), keywords, tpm_chile, datetime_chile)
-    # print(tpm_chile['All'])
 
     if tpm_changed is True:
         #p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
@@ -267,6 +305,9 @@ def update_graphs_chile(data):
     [Input('signal', 'children')]
 )
 def update_graphs_prensa(data):
+    """
+    When compute_data() returns the data read from mongo.  The plot and wordcloud of "tab-prensa" will be updated.
+    """
     global tpm_prensa, datetime_prensa, wc_prensa, graph_prensa
 
     tpm_changed, tpm_prensa, datetime_prensa = \
@@ -289,6 +330,9 @@ def update_graphs_prensa(data):
     [Input('signal', 'children')]
 )
 def update_graphs_politicos(data):
+    """
+    When compute_data() returns the data read from mongo.  The plot and wordcloud of "tab-politicos" will be updated.
+    """
     global tpm_politicos, datetime_politicos, wc_politicos, graph_politicos
 
     tpm_changed, tpm_politicos, datetime_politicos = \
