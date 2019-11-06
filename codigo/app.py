@@ -8,8 +8,8 @@ from dash.dependencies import Input, Output
 from multiprocessing import Process, Queue
 from utils import read_mongo, json_pandas
 from main import get_keywords
-from utils_app import get_tpm, create_graph, create_wc, get_username_list
-from npl_utils import init_counter
+from utils_app import get_tpm, create_graph, create_wc, get_username_list, create_wc2
+from npl_utils import init_counter, process
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # global variables
@@ -30,12 +30,14 @@ df = json_pandas(
                json_only=True, num_limit=10 ** 5)
 )
 
-word_counter = init_counter(df['tweet'])
+twiterator = map(process, df['tweet'])
+word_counter = init_counter(twiterator)
 
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
 graph_chile = create_graph(tpm_chile, keywords[:9])
-wc_chile = create_wc(tpm_chile, keywords)
+#wc_chile = create_wc(tpm_chile, keywords)
+wc_chile = create_wc2(word_counter)
 q_chile = Queue()
 
 tpm_prensa = get_tpm(df.loc[df['screenName'].isin(noticieros)].copy(), keywords)
@@ -158,8 +160,18 @@ def global_store(num_limit=None):
 def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
     queue.put(create_wc(tpm, kws))
 
+def multiprocessing_wc2(counter, queue):
+    """
+    Same as  multiprocessing_wc but with the new create_wc that
+    receives a counter rather than a dataframe
+    :param counter: Counter() instance
+    :param queue: Queue() instance
+    """
+    queue.put(create_wc2(counter))
+
 def update_counter(data_frame):
-    pass
+    twiterator = map(process, data_frame['tweet'])
+    return init_counter(twiterator)
 
 def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     tpm_changed = False
@@ -232,13 +244,20 @@ def update_graphs_chile(data):
     # print(tpm_chile['All'])
 
     if tpm_changed is True:
-        p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
-        p.start()
+        #p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
+        #p.start()
 
         graph_chile = create_graph(tpm_chile, keywords[:9])
 
+        #wc_chile = q_chile.get()
+        #p.join()
+
+        word_counter = update_counter(json_pandas(data).copy())
+
+        p2 = Process(target=multiprocessing_wc2, args=(word_counter, q_chile))
+        p2.start()
         wc_chile = q_chile.get()
-        p.join()
+        p2.join()
 
     return graph_chile, wc_chile
 

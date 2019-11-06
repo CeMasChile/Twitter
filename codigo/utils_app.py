@@ -200,6 +200,89 @@ def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_co
         )
         return fig
 
+def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
+                                                  "width": 1200, "height": 800}) -> object:
+    """
+    Generate a wordcloud of the keywords given, wheighted by the number of
+    unique tweets they appear in. Returns a go.Figure() instance.
+
+    :param counter: Counter with the processed words
+    :param n: Number of most common words to display
+    :param wc_kwargs: dict of keyword arguments to give to the WordCloud
+    constructor.
+    TODO: test corner cases
+    """
+    # Build the word cloud from the data
+    #wf = get_word_frequency(tpm, keywords)
+    #new_keywords = []
+    #for key in keywords:
+    #    if wf[key] > 0:
+    #        new_keywords.append(key)
+
+    #keywords = new_keywords
+    #wf = {key:wf[key] for key in keywords}
+    #if len(wf) == 0:
+    #    return go.Figure()
+    #else:
+    filtered_ctr = dict(counter.most_common(n))
+    word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(filtered_ctr)
+
+    wc_raster = Image.fromarray(word_cloud.to_array())
+
+    # Call the constructor of Figure object
+    fig = go.Figure()
+
+    # Constants
+    img_width = 1600
+    img_height = 900
+    scale_factor = 0.5
+
+    # Add invisible scatter trace.
+    # This trace is added to help the autoresize logic work.
+    fig.add_trace(
+        go.Scatter(
+            x=[0, img_width * scale_factor],
+            y=[0, img_height * scale_factor],
+            mode="markers",
+            marker_opacity=0
+        )
+    )
+
+    # Configure axes
+    fig.update_xaxes(
+        visible=False,
+        range=[0, img_width * scale_factor]
+    )
+
+    fig.update_yaxes(
+        visible=False,
+        range=[0, img_height * scale_factor],
+        # the scaleanchor attribute ensures that the aspect ratio stays constant
+        scaleanchor="x"
+    )
+
+    # Add image
+    fig.update_layout(
+        images=[go.layout.Image(
+            x=0,
+            sizex=img_width * scale_factor,
+            y=img_height * scale_factor,
+            sizey=img_height * scale_factor,
+            xref="x",
+            yref="y",
+            opacity=1.0,
+            layer="below",
+            sizing="stretch",
+            source=wc_raster)]
+    )
+
+    # Configure other layout
+    fig.update_layout(
+        width=img_width * scale_factor,
+        height=img_height * scale_factor,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0}
+    )
+    return fig
 
 def get_username_list(direction):
     '''
