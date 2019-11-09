@@ -379,3 +379,4 @@ fabric.properties
 *.iml
 
 keys.txt
+codigo/spacy_lemma_dictionary_es_cl.json
