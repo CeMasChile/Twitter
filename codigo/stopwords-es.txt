@@ -10,6 +10,8 @@
 9
 _
 a
+acá
+aca
 actualmente
 acuerdo
 adelante
@@ -23,6 +25,7 @@ ahora
 ahí
 al
 algo
+alguien
 alguna
 algunas
 alguno
@@ -240,6 +243,7 @@ estuviésemos
 estuvo
 está
 estábamos
+estai
 estáis
 están
 estás
@@ -258,6 +262,7 @@ fin
 final
 fue
 fuera
+fuerai
 fuerais
 fueran
 fueras
@@ -274,6 +279,7 @@ fuéramos
 fuésemos
 g
 general
+gracias
 gran
 grandes
 gueno
@@ -281,6 +287,7 @@ h
 ha
 haber
 habia
+habiai
 habida
 habidas
 habido
@@ -290,6 +297,7 @@ habla
 hablan
 habremos
 habrá
+habrai
 habrán
 habrás
 habré
@@ -312,6 +320,7 @@ hacen
 hacer
 hacerlo
 haces
+haci
 hacia
 haciendo
 hago
@@ -320,6 +329,7 @@ has
 hasta
 hay
 haya
+hayai
 hayamos
 hayan
 hayas
@@ -329,10 +339,12 @@ hecho
 hemos
 hicieron
 hizo
+hola
 horas
 hoy
 hube
 hubiera
+hubierai
 hubierais
 hubieran
 hubieras
@@ -354,6 +366,7 @@ indicó
 informo
 informó
 intenta
+intentai
 intentais
 intentamos
 intentan
@@ -440,6 +453,8 @@ nuevos
 nunca
 o
 ocho
+ojala
+ojalá
 os
 otra
 otras
@@ -451,6 +466,7 @@ para
 parece
 parte
 partir
+pasa
 pasada
 pasado
 paìs
@@ -464,7 +480,9 @@ pocos
 podeis
 podemos
 poder
+podi
 podria
+podriai
 podriais
 podriamos
 podrian
@@ -505,6 +523,8 @@ queremos
 quien
 quienes
 quiere
+quiero
+quieren
 quiza
 quizas
 quizá
@@ -528,6 +548,8 @@ saber
 sabes
 sal
 salvo
+ojala
+ojalá
 se
 sea
 seamos
@@ -703,6 +725,7 @@ verdad
 verdadera
 verdadero
 vez
+via
 vosotras
 vosotros
 voy

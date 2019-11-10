@@ -2,9 +2,14 @@ import re
 from collections import Counter
 from gensim.utils import deaccent, to_unicode
 import  gensim.parsing.preprocessing as proc
+import unicodedata
+from six import u
+import sys
 ####################
 # Global variables
 ####################
+if sys.version_info[0] >=3:
+    unicode = str
 
 # Load list of stopwords
 with open('stopwords-es.txt', 'r') as file:
@@ -23,6 +28,22 @@ punctuation_es = r'([!¡"\#\$%\&\'\(\)\*\+,\-\./:;<=>\?\¿@\[\\\]\^_`\{\|\}\~])+
 multi_pattern = '|'.join([tw_handles, urls, punctuation_es])
 non_plain_re = re.compile(multi_pattern, re.UNICODE)
 ####################
+
+def deaccent_es(text):
+    """
+    Same as gensim.utils.deaccent but keep ñ's, olé.
+    :param text: string
+    :return: unicode string
+    """
+    if not isinstance(text, unicode):
+        # assume utf8 for byte strings, use default (strict) error handling
+        text = text.decode('utf8')
+    norm = unicodedata.normalize("NFD", text)
+    result = u('').join(ch for ch in norm \
+                        if unicodedata.name(ch) == 'COMBINING TILDE' \
+                        or unicodedata.category(ch) != 'Mn')
+    return unicodedata.normalize("NFC", result)
+
 
 def remove_non_plain(document):
     """
