@@ -461,6 +461,7 @@ otras
 otro
 otros
 p
+pa
 pais
 para
 parece
@@ -469,10 +470,13 @@ partir
 pasa
 pasada
 pasado
+paso
 paìs
 peor
 pero
 pesar
+paso
+po
 poca
 pocas
 poco
@@ -547,14 +551,18 @@ saben
 saber
 sabes
 sal
+saludo
+saludos
 salvo
 ojala
 ojalá
 se
 sea
+seai
 seamos
 sean
 seas
+seguir
 segun
 segunda
 segundo
@@ -562,6 +570,7 @@ según
 seis
 ser
 sera
+serai
 seremos
 será
 serán
@@ -569,6 +578,7 @@ serás
 seré
 seréis
 sería
+seríai
 seríais
 seríamos
 serían
@@ -726,6 +736,7 @@ verdadera
 verdadero
 vez
 via
+video
 vosotras
 vosotros
 voy
