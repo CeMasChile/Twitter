@@ -1,12 +1,10 @@
-import pandas as pd
-from PIL import Image
-import plotly.graph_objs as go
-from wordcloud import WordCloud
-from main import get_keywords
 import numpy as np
-import time
+import pandas as pd
+import plotly.graph_objs as go
+from PIL import Image
+from wordcloud import WordCloud
 
-key_words = get_keywords()[:9]
+from main import get_keywords
 
 
 def get_users(direction):
@@ -23,15 +21,15 @@ def get_time_text(direction):
     pd.read_csv(direction, usecols=['dateTweet', 'tweet'])
 
 
-def get_kw_dict(df, col='tweet'):
+def get_kw_dict(df, keywords, col='tweet'):
     '''
         devuelve un diccionario con los índices del df que contienen cada una de las palabras clave
         ojo, eso no tiene pq sumar el total, ya que puden haber tweets con ambas palabras
     '''
-    return {kw: df[df[col].str.contains(kw)].index for kw in key_words}
+    return {kw: df[df[col].str.contains(kw)].index for kw in keywords}
 
 
-def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
+def get_tpm(df, keywords=None, column='dateTweet', wholedf=None):
     '''
     funcion que nos dice el nro de veces que aparece una determinada fecha
     en formato df, donde el index es la fecha con hora hasta el minuto y la columna es la frecuencia
@@ -43,12 +41,12 @@ def get_tpm(df, key_words=None, column='dateTweet', wholedf=None):
     index_frecuencia_tweets = \
         pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
 
-    if(key_words is None):
+    if(keywords is None):
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
         frecuencia_tweets = pd.DataFrame(df[column].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets.reindex(index_frecuencia_tweets).fillna(0)
     else:
-        pandas_dict = get_pandas_dict(df, key_words)
+        pandas_dict = get_pandas_dict(df, keywords)
         DTime = {key: get_tpm(pandas_dict[key]) for key in pandas_dict}
         DTime = {key: DTime[key].reindex(index_frecuencia_tweets).fillna(0) for key in DTime}
         return DTime
@@ -78,7 +76,7 @@ def get_tpm_users(df, users, keywords):
     politicosdf = df.iloc[indices].filter(['tweet', 'dateTweet'])
     politicosdf['All'] = 1
 
-    for word in key_words:
+    for word in keywords:
         politicosdf[word] = politicosdf['tweet'].str.contains(word).astype(int)
     politicosdf = politicosdf.loc[:, politicosdf.columns != 'tweet']
     politicosdf = politicosdf.groupby('dateTweet').sum()
@@ -93,8 +91,8 @@ def get_pandas_dict(df, keywords):
     :param keywords: keywords para buscar
     :return: devuelve un diccionario con las caracteristicas descritas
     '''
-    kwdic = get_kw_dict(df)
-    DD = {word: df.iloc[kwdic[word]] for word in keywords}
+    kwdic = get_kw_dict(df, keywords)
+    DD = {key: df.ix[kwdic[key]] for key in keywords}
     DD['All'] = df
     return DD
 
@@ -120,8 +118,8 @@ def create_graph(tpm, keywords):
     return graph
 
 
-def create_wc(tpm, keywords, wc_kwargs={"background_color":'white', "colormap":'plasma',
-              "width":1200, "height":800}):
+def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
+                                                  "width": 1200, "height": 800}) -> object:
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
@@ -135,12 +133,12 @@ def create_wc(tpm, keywords, wc_kwargs={"background_color":'white', "colormap":'
     wf = get_word_frequency(tpm, keywords)
     new_keywords = []
     for key in keywords:
-        if(wf[key] > 0):
+        if wf[key] > 0:
             new_keywords.append(key)
 
     keywords = new_keywords
     wf = {key:wf[key] for key in keywords}
-    if(len(wf) == 0):
+    if len(wf) == 0:
         return go.Figure()
     else:
         word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(wf)
@@ -202,6 +200,89 @@ def create_wc(tpm, keywords, wc_kwargs={"background_color":'white', "colormap":'
         )
         return fig
 
+def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
+                                                  "width": 1200, "height": 800}) -> object:
+    """
+    Generate a wordcloud of the keywords given, wheighted by the number of
+    unique tweets they appear in. Returns a go.Figure() instance.
+
+    :param counter: Counter with the processed words
+    :param n: Number of most common words to display
+    :param wc_kwargs: dict of keyword arguments to give to the WordCloud
+    constructor.
+    TODO: test corner cases
+    """
+    # Build the word cloud from the data
+    #wf = get_word_frequency(tpm, keywords)
+    #new_keywords = []
+    #for key in keywords:
+    #    if wf[key] > 0:
+    #        new_keywords.append(key)
+
+    #keywords = new_keywords
+    #wf = {key:wf[key] for key in keywords}
+    #if len(wf) == 0:
+    #    return go.Figure()
+    #else:
+    filtered_ctr = dict(counter.most_common(n))
+    word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(filtered_ctr)
+
+    wc_raster = Image.fromarray(word_cloud.to_array())
+
+    # Call the constructor of Figure object
+    fig = go.Figure()
+
+    # Constants
+    img_width = 1600
+    img_height = 900
+    scale_factor = 0.5
+
+    # Add invisible scatter trace.
+    # This trace is added to help the autoresize logic work.
+    fig.add_trace(
+        go.Scatter(
+            x=[0, img_width * scale_factor],
+            y=[0, img_height * scale_factor],
+            mode="markers",
+            marker_opacity=0
+        )
+    )
+
+    # Configure axes
+    fig.update_xaxes(
+        visible=False,
+        range=[0, img_width * scale_factor]
+    )
+
+    fig.update_yaxes(
+        visible=False,
+        range=[0, img_height * scale_factor],
+        # the scaleanchor attribute ensures that the aspect ratio stays constant
+        scaleanchor="x"
+    )
+
+    # Add image
+    fig.update_layout(
+        images=[go.layout.Image(
+            x=0,
+            sizex=img_width * scale_factor,
+            y=img_height * scale_factor,
+            sizey=img_height * scale_factor,
+            xref="x",
+            yref="y",
+            opacity=1.0,
+            layer="below",
+            sizing="stretch",
+            source=wc_raster)]
+    )
+
+    # Configure other layout
+    fig.update_layout(
+        width=img_width * scale_factor,
+        height=img_height * scale_factor,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0}
+    )
+    return fig
 
 def get_username_list(direction):
     '''
