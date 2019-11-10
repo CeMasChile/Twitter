@@ -2,6 +2,7 @@ import warnings
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 
 warnings.filterwarnings('ignore')
 from dash.dependencies import Input, Output
@@ -36,7 +37,7 @@ word_counter = init_counter(twiterator)
 tpm_chile = get_tpm(df.copy(), keywords)
 datetime_chile = tpm_chile['All'].index.max()
 graph_chile = create_graph(tpm_chile, keywords[:9])
-#wc_chile = create_wc(tpm_chile, keywords)
+# wc_chile = create_wc(tpm_chile, keywords)
 wc_chile = create_wc2(word_counter)
 q_chile = Queue()
 
@@ -79,71 +80,104 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # layout for Dash object
-app.layout = html.Div([
+# app.config['suppress_callback_exceptions'] = True
 
-    # ======== PRESENTACION PAGINA ======== #
 
-    html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
-    html.H5(children='''
-    En esta página usted tiene acceso a distintas visualizaciones referentes a la situación
-    actual de Chile.
-    ''', style={'textAlign': 'center'}),
+# Header w/ site info
+HEADER = html.Div(
+    [
+        dbc.Row(
+            html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
+        ),
+        dbc.Row(
+            html.H4(
+                children="En esta página usted tiene acceso a distintas visualizaciones referentes a la situación "
+                         "actual de Chile.",
+                style={'textAlign': 'center'}
+            ),
 
-    html.H6(children="El objetivo es  que la ciudadanía tenga un fácil acceso a lo que estan diciendo los actores "
-                     "políticos, los medios de comunicación y la ciudadanía",
-            style={'textAlign': 'center'}),
-
-    # ======== TABS PRENSA, CHILE, POLITICOS ======== #
-
-    dcc.Tabs(id='tabs-graphs', value='tab-chile', children=[
-        dcc.Tab(label='Prensa', id='graphs-prensa', value='tab-prensa', children=html.Div([
-            html.H6(
-                children="Los distintos medios de comunicación chilenos utilizan Twitter.  En tiempo real, se puede "
-                         "ver la cantidad de Tweets realizadas por la prensa:",
+        ),
+        dbc.Row(
+            html.H5(
+                children="El objetivo es  que la ciudadanía tenga un fácil acceso a lo que estan diciendo los actores "
+                         "políticos, medios de comunicación y ciudadanía",
                 style={'textAlign': 'center'}),
-            html.Div(fig_tpm_prensa, style={'textAlign': 'center'}),
+        ),
+    ],
+    className="app__header"
+)
 
-            html.H6("En donde las palabras que más usadas en sus tweets son:",
-                    style={'textAlign': 'center'}),
-            html.Div(fig_wc_prensa, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'})
-        ])
-                ),
+# Lamba function used to create tabs more efficiently
+TAB_LAYOUT = lambda x, fig_tpm, fig_wc: \
+    dbc.Row(
+        [
+            # Tweets per Minute
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardHeader(
+                        html.H5(
+                            "Frecuencia de tweets de " + x + " durante la última hora"
+                        )
+                    ),
+                    dbc.CardBody("test")
+                )
+            ),
+            # WordCloud
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardHeader(
+                        html.H5(
+                            "Palabras más utilizadas por " + x + " durante la última hora"
+                        )
+                    ),
+                    dbc.CardBody("test")
+                )
+            ),
+        ]
+    )
 
-        dcc.Tab(label='Chile', id='graphs-chile', value='tab-chile', children=html.Div([
-            html.H6(
-                children="Los chilenos también usan Twitter.  En tiempo real, se puede ver la frecuencia en que la "
-                         "gente utiliza la red social para expresarse:",
-                style={'textAlign': 'center'}),
-            html.Div(fig_tpm_chile, style={'textAlign': 'center'}),
+# Different Tabs
+tab1_prensa = TAB_LAYOUT("la prensa", fig_tpm_prensa, fig_wc_prensa)
 
-            html.H6("Las palabras que más usan los usuarios de twitter son:",
-                    style={'textAlign': 'center'}),
-            html.Div(fig_wc_chile, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
-        ])
-                ),
+tab2_chile = TAB_LAYOUT("la ciudadanía", fig_tpm_prensa, fig_wc_prensa)
 
-        dcc.Tab(label='Politicos', id='graphs-politicos', value='tab-politicos', children=html.Div([
-            html.H6(
-                children="Twitter se ha vuelto una plataforma importante para los políticos de hoy.  La frecuencia "
-                         "con la que publican en Twitter es:",
-                style={'textAlign': 'center'}),
-            html.Div(fig_tpm_politicos, style={'textAlign': 'center'}),
+tab3_politicos = TAB_LAYOUT("políticos", fig_tpm_prensa, fig_wc_prensa)
 
-            html.H6("Las palabras que más usan los políticos para expresarse en Twitter son:",
-                    style={'textAlign': 'center'}),
-            html.Div(fig_wc_politicos, style={'textAlign': 'center', 'display': 'flex', 'justify-content': 'center'}),
-        ])
-                ),
-    ]),
+tabs = dbc.Tabs(
+    [
+        dbc.Tab(tab1_prensa, label="Tab-Prensa"),
+        dbc.Tab(tab2_chile, label="Tab-Chile"),
+        dbc.Tab(tab3_politicos, label="Tab-Politicos"),
+    ]
+)
 
-    # ======== hidden signal value ======== #
-    html.Div(id='signal', style={'display': 'none'}),
+# Body
+BODY = dbc.Jumbotron(
+    tabs,
 
-    # ========  time interval ======== #
-    dcc.Interval(id='interval',
-                 interval=time_interval * 1000,  # in milliseconds
-                 n_intervals=0),
-])
+)
+
+# Final layout
+app.layout = html.Div(
+    [
+
+        # ======== PRESENTACION PAGINA ======== #
+        HEADER,
+
+        # ======== TABS PRENSA, CHILE, POLITICOS ======== #
+        BODY,
+
+        # ======== hidden signal value ======== #
+        html.Div(id='signal', style={'display': 'none'}),
+
+        # ========  time interval ======== #
+        dcc.Interval(id='interval',
+                     interval=time_interval * 1000,  # in milliseconds
+                     n_intervals=0),
+
+    ],
+    className="app__container",
+)
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -165,6 +199,7 @@ def multiprocessing_wc(tpm, kws, queue, test_without_wc=True):
     """
     queue.put(create_wc(tpm, kws))
 
+
 def multiprocessing_wc2(counter, queue):
     """
     Same as  multiprocessing_wc but with the new create_wc that
@@ -174,9 +209,11 @@ def multiprocessing_wc2(counter, queue):
     """
     queue.put(create_wc2(counter))
 
+
 def update_counter(data_frame):
     twiterator = map(process, data_frame['tweet'])
     return init_counter(twiterator)
+
 
 def update_tpm(data_frame, kws, tpm, datetime, return_changed=True):
     """
@@ -265,7 +302,8 @@ def compute_data(_):
     """
     return read_mongo('dbTweets', 'tweets_chile',
                       query_fields={"dateTweet": 1, "tweet": 1, "screenName": 1},
-                      json_only=True, num_limit=10**5)
+                      json_only=True, num_limit=10 ** 5)
+
 
 # tweets per minute callbacks
 @app.callback(
@@ -282,13 +320,13 @@ def update_graphs_chile(data):
         update_tpm(json_pandas(data).copy(), keywords, tpm_chile, datetime_chile)
 
     if tpm_changed is True:
-        #p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
-        #p.start()
+        # p = Process(target=multiprocessing_wc, args=(tpm_chile, keywords, q_chile))
+        # p.start()
 
         graph_chile = create_graph(tpm_chile, keywords[:9])
 
-        #wc_chile = q_chile.get()
-        #p.join()
+        # wc_chile = q_chile.get()
+        # p.join()
 
         word_counter = update_counter(json_pandas(data).copy())
 

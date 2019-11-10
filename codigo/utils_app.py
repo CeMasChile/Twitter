@@ -234,7 +234,7 @@ def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background
 
     # Constants
     img_width = 1600
-    img_height = 900
+    img_height = 600
     scale_factor = 0.5
 
     # Add invisible scatter trace.
