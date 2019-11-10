@@ -10,3 +10,6 @@ wordcloud
 flask-caching
 gensim
 matplotlib
+configparser
+scrapy
+lxml
