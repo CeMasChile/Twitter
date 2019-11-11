@@ -4,13 +4,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
-warnings.filterwarnings('ignore')
 from dash.dependencies import Input, Output
 from multiprocessing import Process, Queue
 from utils import read_mongo, json_pandas
 from main import get_keywords
 from utils_app import get_tpm, create_graph, create_wc, get_username_list, create_wc2
 from npl_utils import init_counter, process
+
+warnings.filterwarnings('ignore')
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # global variables
@@ -58,7 +59,7 @@ max_length = 100  # maximum number of points to plot
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # layout
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 fig_tpm_chile = dcc.Graph(figure=graph_chile, id='plot-tweets-chile')
 fig_tpm_prensa = dcc.Graph(figure=graph_prensa, id='plot-tweets-prensa')
@@ -69,7 +70,8 @@ fig_wc_prensa = dcc.Graph(figure=wc_prensa, id='word-cloud-prensa')
 fig_wc_politicos = dcc.Graph(figure=wc_politicos, id='word-cloud-politicos')
 
 # Dash object
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.PULSE])
+# app.config['suppress_callback_exceptions'] = True
 
 # CACHE_CONFIG = {
 #     'CACHE_TYPE': 'filesystem',
@@ -80,14 +82,25 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # layout for Dash object
-# app.config['suppress_callback_exceptions'] = True
 
+NAV_BAR = dbc.NavbarSimple(
+    children=[
+        dbc.NavItem(dbc.NavLink("Vuelve a nuestro sitio", href="https://www.cemas.cl")),
+    ],
+    brand="Análisis de Twitter en tiempo real",
+    sticky="top",
+    color="dark",
+    dark=True,
+)
 
 # Header w/ site info
-HEADER = html.Div(
+HEADER = dbc.Container(
     [
         dbc.Row(
-            html.H1(children='¡Bienvenid@ al DashBoard del CeMAS!', style={'textAlign': 'center'}),
+            html.H1(
+                children='¡Bienvenid@ al DashBoard del CeMAS!',
+                style={'textAlign': 'center', 'margin-top': '20px'}
+            ),
         ),
         dbc.Row(
             html.H4(
@@ -103,69 +116,76 @@ HEADER = html.Div(
                          "políticos, medios de comunicación y ciudadanía",
                 style={'textAlign': 'center'}),
         ),
+        html.Hr(className="my-2"),
     ],
     className="app__header"
 )
 
-# Lamba function used to create tabs more efficiently
-TAB_LAYOUT = lambda x, fig_tpm, fig_wc: \
-    dbc.Row(
-        [
-            # Tweets per Minute
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardHeader(
-                        html.H5(
-                            "Frecuencia de tweets de " + x + " durante la última hora"
-                        )
+
+# Function used to create tabs more efficiently
+def TAB_LAYOUT(x, fig_tpm, fig_wc):
+    return \
+        dbc.Row(
+            [  # Tweets per Minute
+                # dbc.Col(width=1),
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(html.H5("Publicaciones de " + x + " por minuto")),
+                            dbc.CardBody(
+                                html.Div(fig_tpm)
+                            ),
+
+                        ]
                     ),
-                    dbc.CardBody("test")
-                )
-            ),
-            # WordCloud
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardHeader(
-                        html.H5(
-                            "Palabras más utilizadas por " + x + " durante la última hora"
-                        )
+                    width=7
+                ),
+                # WordCloud
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(html.H5("Palabras más utilizadas por" + x)),
+                            dbc.CardBody(
+                                dbc.Container(fig_wc)
+                            )
+                        ]
                     ),
-                    dbc.CardBody("test")
-                )
-            ),
-        ]
-    )
+                    width="auto"
+                ),
+            ],
+        )
+
 
 # Different Tabs
 tab1_prensa = TAB_LAYOUT("la prensa", fig_tpm_prensa, fig_wc_prensa)
 
-tab2_chile = TAB_LAYOUT("la ciudadanía", fig_tpm_prensa, fig_wc_prensa)
+tab2_chile = TAB_LAYOUT("la ciudadanía", fig_tpm_chile, fig_wc_chile)
 
-tab3_politicos = TAB_LAYOUT("políticos", fig_tpm_prensa, fig_wc_prensa)
+tab3_politicos = TAB_LAYOUT("políticos", fig_tpm_politicos, fig_wc_politicos)
 
 tabs = dbc.Tabs(
     [
-        dbc.Tab(tab1_prensa, label="Tab-Prensa"),
-        dbc.Tab(tab2_chile, label="Tab-Chile"),
-        dbc.Tab(tab3_politicos, label="Tab-Politicos"),
-    ]
+        dbc.Tab(tab2_chile, label="Chile"),
+        dbc.Tab(tab1_prensa, label="Prensa"),
+        dbc.Tab(tab3_politicos, label="Politicos"),
+    ],
 )
 
 # Body
-BODY = dbc.Jumbotron(
-    tabs,
-
-)
+BODY = dbc.Container(tabs)
 
 # Final layout
 app.layout = html.Div(
     [
+        NAV_BAR,
 
         # ======== PRESENTACION PAGINA ======== #
         HEADER,
 
-        # ======== TABS PRENSA, CHILE, POLITICOS ======== #
-        BODY,
+        dbc.Container([
+            # ======== TABS PRENSA, CHILE, POLITICOS ======== #
+            BODY,
+        ]),
 
         # ======== hidden signal value ======== #
         html.Div(id='signal', style={'display': 'none'}),

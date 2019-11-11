@@ -4,8 +4,6 @@ import plotly.graph_objs as go
 from PIL import Image
 from wordcloud import WordCloud
 
-from main import get_keywords
-
 
 def get_users(direction):
     '''
@@ -41,7 +39,7 @@ def get_tpm(df, keywords=None, column='dateTweet', wholedf=None):
     index_frecuencia_tweets = \
         pd.DataFrame(wholedf[column].value_counts()).sort_index().iloc[1:-1].index
 
-    if(keywords is None):
+    if (keywords is None):
         df.loc[:, column] = pd.to_datetime(df[column], utc=True).dt.floor('min')
         frecuencia_tweets = pd.DataFrame(df[column].value_counts()).sort_index().iloc[1:-1]
         return frecuencia_tweets.reindex(index_frecuencia_tweets).fillna(0)
@@ -105,13 +103,13 @@ def get_word_frequency(tpm, keywords):
 
     TODO: - drop dependency on numpy?
     """
-    return {key:np.sum(tpm[key]['dateTweet'].values) for key in keywords}
+    return {key: np.sum(tpm[key]['dateTweet'].values) for key in keywords}
 
 
 def create_graph(tpm, keywords):
     traces = [go.Scatter(x=tpm[key].index, y=tpm[key]['dateTweet'].values,
-              mode='lines+markers', text=key, name=key)
-              for key in keywords + ['All']]
+                         mode='lines+markers', text=key, name=key)
+              for key in keywords]
 
     graph = go.Figure({'data': traces})
 
@@ -119,7 +117,7 @@ def create_graph(tpm, keywords):
 
 
 def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
-                                                  "width": 1200, "height": 800}) -> object:
+                                                                  "width": 700, "height": 900}) -> object:
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
@@ -137,7 +135,7 @@ def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_co
             new_keywords.append(key)
 
     keywords = new_keywords
-    wf = {key:wf[key] for key in keywords}
+    wf = {key: wf[key] for key in keywords}
     if len(wf) == 0:
         return go.Figure()
     else:
@@ -149,7 +147,7 @@ def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_co
         fig = go.Figure()
 
         # Constants
-        img_width = 1600
+        img_width = 700
         img_height = 900
         scale_factor = 0.5
 
@@ -200,8 +198,9 @@ def create_wc(tpm: object, keywords: object, wc_kwargs: object = {"background_co
         )
         return fig
 
+
 def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background_color": 'white', "colormap": 'plasma',
-                                                  "width": 1200, "height": 800}) -> object:
+                                                                     "width": 700, "height": 900}) -> object:
     """
     Generate a wordcloud of the keywords given, wheighted by the number of
     unique tweets they appear in. Returns a go.Figure() instance.
@@ -213,17 +212,17 @@ def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background
     TODO: test corner cases
     """
     # Build the word cloud from the data
-    #wf = get_word_frequency(tpm, keywords)
-    #new_keywords = []
-    #for key in keywords:
+    # wf = get_word_frequency(tpm, keywords)
+    # new_keywords = []
+    # for key in keywords:
     #    if wf[key] > 0:
     #        new_keywords.append(key)
 
-    #keywords = new_keywords
-    #wf = {key:wf[key] for key in keywords}
-    #if len(wf) == 0:
+    # keywords = new_keywords
+    # wf = {key:wf[key] for key in keywords}
+    # if len(wf) == 0:
     #    return go.Figure()
-    #else:
+    # else:
     filtered_ctr = dict(counter.most_common(n))
     word_cloud = WordCloud(**wc_kwargs).generate_from_frequencies(filtered_ctr)
 
@@ -233,8 +232,8 @@ def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background
     fig = go.Figure()
 
     # Constants
-    img_width = 1600
-    img_height = 600
+    img_width = 700
+    img_height = 900
     scale_factor = 0.5
 
     # Add invisible scatter trace.
@@ -283,6 +282,7 @@ def create_wc2(counter: object, n: object = 35, wc_kwargs: object = {"background
         margin={"l": 0, "r": 0, "t": 0, "b": 0}
     )
     return fig
+
 
 def get_username_list(direction):
     '''
