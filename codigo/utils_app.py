@@ -4,8 +4,6 @@ import plotly.graph_objs as go
 from PIL import Image
 from wordcloud import WordCloud
 
-from main import get_keywords
-
 
 def get_users(direction):
     '''

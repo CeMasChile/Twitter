@@ -1,4 +1,5 @@
 import warnings
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -69,6 +70,8 @@ fig_wc_politicos = dcc.Graph(figure=wc_politicos, id='word-cloud-politicos')
 
 # Dash object
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+server = app.server
 
 # CACHE_CONFIG = {
 #     'CACHE_TYPE': 'filesystem',

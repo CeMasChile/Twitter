@@ -1,10 +1,10 @@
 import glob
+import json
 import os
 import sys
 import time
 
 import pandas as pd
-import json
 from bson.json_util import dumps
 from pymongo import MongoClient
 

@@ -10,3 +10,4 @@ wordcloud
 flask-caching
 gensim
 matplotlib
+gunicorn

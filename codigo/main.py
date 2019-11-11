@@ -1,8 +1,8 @@
-import csv
+import io
 
 import pandas as pd
 import tweepy
-import io
+
 import config
 
 

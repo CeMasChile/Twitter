@@ -1,8 +1,10 @@
 import csv
+import json
 import sys
 import time
 from datetime import datetime
 
+from pymongo import MongoClient
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
@@ -10,8 +12,6 @@ from tweepy.streaming import StreamListener
 import config
 from main import get_keywords
 from utils import extract_hash_tags, parse_tweet
-from pymongo import MongoClient
-import json
 
 csv_prompt = input("Quiere crear un .csv?: [Y/n] ").lower()
 

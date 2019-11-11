@@ -1,7 +1,9 @@
 import re
 from collections import Counter
+
+import gensim.parsing.preprocessing as proc
 from gensim.utils import deaccent, to_unicode
-import  gensim.parsing.preprocessing as proc
+
 ####################
 # Global variables
 ####################
