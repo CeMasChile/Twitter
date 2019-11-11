@@ -1,6 +1,9 @@
 cache-directory/
 Output*
 notebook*
+venv
+*.pyc
+.env
 
 .ipynb_checkpoints
 config.py
