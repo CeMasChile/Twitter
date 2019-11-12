@@ -2,17 +2,15 @@ import re
 from collections import Counter
 from gensim.utils import deaccent, to_unicode
 import  gensim.parsing.preprocessing as proc
+import unicodedata
+from six import u
+import sys
 ####################
 # Global variables
 ####################
+if sys.version_info[0] >=3:
+    unicode = str
 
-# Load list of stopwords
-with open('stopwords-es.txt', 'r') as file:
-    stopwords = list()
-    for line in file:
-        stop_word = deaccent(line.strip('\n'))
-        stopwords.append(stop_word)
-stopwords = frozenset(stopwords)
 
 # regexp for matching @usernames and #hashtags
 tw_handles = r"([@][A-z]+)|([#][A-z]+)"
@@ -24,10 +22,33 @@ multi_pattern = '|'.join([tw_handles, urls, punctuation_es])
 non_plain_re = re.compile(multi_pattern, re.UNICODE)
 ####################
 
+def deaccent_es(text):
+    """
+    Same as gensim.utils.deaccent but keep ñ's, olé.
+    :param text: string
+    :return: unicode string
+    """
+    if not isinstance(text, unicode):
+        # assume utf8 for byte strings, use default (strict) error handling
+        text = text.decode('utf8')
+    norm = unicodedata.normalize("NFD", text)
+    result = u('').join(ch for ch in norm \
+                        if unicodedata.name(ch) == 'COMBINING TILDE' \
+                        or unicodedata.category(ch) != 'Mn')
+    return unicodedata.normalize("NFC", result)
+
+# Load list of stopwords
+with open('stopwords-es.txt', 'r') as file:
+    stopwords = list()
+    for line in file:
+        stop_word = deaccent_es(line.strip('\n'))
+        stopwords.append(stop_word)
+stopwords = frozenset(stopwords)
+
 def remove_non_plain(document):
     """
     Replaces urls, @usernames, #tags, emojis and numbers
-    with a ' ' (space). Also removes accents and punctuation
+    with a ' ' (space). Also removes punctuation
     to finally remove redundant whitespace and lowercase all
     characters
     :param document: string
@@ -38,7 +59,6 @@ def remove_non_plain(document):
     document = proc.strip_non_alphanum(document)
     document = proc.strip_numeric(document)
     document = proc.strip_multiple_whitespaces(document)
-    document = deaccent(document)
     return document.lower()
 
 def process(document):
@@ -54,6 +74,7 @@ def process(document):
     """
     wordbag = list()
     for token in set(remove_non_plain(document).split()):
+        token = deaccent_es(token)
         if token not in stopwords and token != '' \
            and token != 'rt':
             wordbag.append(token)
