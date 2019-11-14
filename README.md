@@ -13,3 +13,8 @@ python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 ```
+
+## Deployment
+
+```sh
+gunicorn app:server -b ip:port
