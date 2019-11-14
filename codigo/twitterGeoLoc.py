@@ -27,10 +27,12 @@ db = client.dbTweets
 coll = db['tweets_' + 'chile']
 
 
-class StreamListener(StreamListener):
+class CustomStreamListener(StreamListener):
 
     # Define a function that is initialized when the miner is called
     def __init__(self, api=None):
+        super(StreamListener, self).__init__()
+        
         # That sets the api
         self.api = api
 
@@ -217,7 +219,7 @@ def read_tweets(region, track):
     auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_TOKEN_SECRET)
 
     # API #
-    l = StreamListener()
+    l = CustomStreamListener()
 
     # OUTPUT #
     filename = 'OutputStreaming'

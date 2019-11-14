@@ -95,11 +95,12 @@ def read_mongo(db, collection, query_condition={}, query_fields={}, host='localh
 
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
-
-    suppress = 1
-    if no_id:
-        suppress = 0
-
+    
+    #if no_id:
+    #    suppress = 0
+    #else:
+    #    suppress = 1
+    
     # query_fields["_id"] = suppress
 
     # Make a query to the specific DB and Collection
