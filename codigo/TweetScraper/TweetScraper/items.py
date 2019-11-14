@@ -9,8 +9,9 @@ class Tweet(Item):
     url = Field()      # tweet url
     datetime = Field() # post time
     text = Field()     # text content
+
+   # User related info
     user_id = Field()  # user id
-    usernameTweet = Field() # username of tweet
 
     nbr_retweet = Field()  # nbr of retweet
     nbr_favorite = Field() # nbr of favorite
@@ -27,10 +28,17 @@ class Tweet(Item):
 
     has_media = Field() # True/False, whether a tweet contains media (e.g. summary)
     medias = Field()    # a list of media
-
+    hash_tags = Field()
 
 class User(Item):
-    ID = Field()            # user id
-    name = Field()          # user name
-    screen_name = Field()   # user screen name
-    avatar = Field()        # avator url
+    user_id = Field()            # ID of user
+    name = Field()               # username of tweet
+    screen_name = Field()        # user screen name
+    follower_count = Field()     # how many followers
+    statuses_count = Field()     # how many tweets
+    created_at = Field()         # creation date
+    verified = Field()           # verified account or not
+    location = Field()           # City name
+    geo_enabled = Field()
+    url = Field()
+    description = Field()        # user's description

@@ -1,3 +1,5 @@
+import sys
+sys.path.append(sys.prefix.replace('/env', '')) # esto es pa importar utils y config
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import Selector
 from scrapy import http
@@ -6,7 +8,10 @@ import re
 import json
 import time
 import logging
+import tweepy
+import config
 from lxml import html
+from utils import extract_hash_tags
 try:
     from urllib import quote  # Python 2.X
 except ImportError:
@@ -17,6 +22,11 @@ from datetime import datetime
 from TweetScraper.items import Tweet, User
 
 logger = logging.getLogger(__name__)
+
+auth = tweepy.OAuthHandler(config.CONSUMER_KEY, config.CONSUMER_SECRET)
+auth.set_access_token(config.ACCESS_TOKEN, config.ACCESS_TOKEN_SECRET)
+
+api = tweepy.API(auth)
 
 
 class TweetScraper(CrawlSpider):
@@ -179,16 +189,26 @@ class TweetScraper(CrawlSpider):
                 tweet['is_retweet'] = is_retweet != []
 
                 tweet['user_id'] = item.xpath('.//@data-user-id').extract()[0]
+
+                tweet['hash_tags'] = extract_hash_tags(text)
+
                 yield tweet
 
                 if self.crawl_user:
                     ### get user info
                     user = User()
-                    user['ID'] = tweet['user_id']
-                    user['name'] = item.xpath('.//@data-name').extract()[0]
-                    user['screen_name'] = item.xpath('.//@data-screen-name').extract()[0]
-                    user['avatar'] = \
-                        item.xpath('.//div[@class="content"]/div[@class="stream-item-header"]/a/img/@src').extract()[0]
+                    twuser = api.get_user(user_id = tweet['user_id'])
+                    user['user_id'] = twuser.id
+                    user['name'] = twuser.name
+                    user['screen_name'] = twuser.screen_name
+                    user['description'] = twuser.description
+                    user['created_at'] = twuser.created_at
+                    user['follower_count'] = twuser.follower_count
+                    user['statuses_count'] = twuser.statuses_count
+                    user['verified'] = twuser.verified
+                    user['location'] = twuser.location
+                    user['geo_enabled'] = twuser.geo_enabled
+                    user['url'] = twuser.url
                     yield user
             except:
                 logger.error("Error tweet:\n%s" % item.xpath('.').extract()[0])
