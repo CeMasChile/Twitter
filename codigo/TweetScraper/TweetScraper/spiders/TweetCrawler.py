@@ -1,5 +1,5 @@
 import sys
-sys.path.append(sys.prefix.replace('/env', '')) # esto es pa importar utils y config
+sys.path.append(sys.prefix.replace('/.env', '')) # esto es pa importar utils y config
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import Selector
 from scrapy import http
@@ -190,7 +190,10 @@ class TweetScraper(CrawlSpider):
 
                 tweet['user_id'] = item.xpath('.//@data-user-id').extract()[0]
 
-                tweet['hash_tags'] = extract_hash_tags(text)
+                # For some reason, scrapy cannot parse a python set object
+                # into the bson document to save it in mongo
+                # The workaround I found was to convert it to string
+                tweet['hash_tags'] = str(extract_hash_tags(tweet['text']))
 
                 yield tweet
 
@@ -198,17 +201,15 @@ class TweetScraper(CrawlSpider):
                     ### get user info
                     user = User()
                     twuser = api.get_user(user_id = tweet['user_id'])
-                    user['user_id'] = twuser.id
+                    user['ID'] = tweet['user_id']
                     user['name'] = twuser.name
                     user['screen_name'] = twuser.screen_name
                     user['description'] = twuser.description
                     user['created_at'] = twuser.created_at
-                    user['follower_count'] = twuser.follower_count
+                    user['followers_count'] = twuser.followers_count
                     user['statuses_count'] = twuser.statuses_count
                     user['verified'] = twuser.verified
                     user['location'] = twuser.location
-                    user['geo_enabled'] = twuser.geo_enabled
-                    user['url'] = twuser.url
                     yield user
             except:
                 logger.error("Error tweet:\n%s" % item.xpath('.').extract()[0])

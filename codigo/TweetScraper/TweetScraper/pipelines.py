@@ -47,9 +47,9 @@ class SaveToMongoPipeline(object):
             if dbItem:
                 pass # simply skip existing items
                 ### or you can update the user, if you don't want to skip:
-                # dbItem.update(dict(item))
-                # self.userCollection.save(dbItem)
-                # logger.info("Update user:%s"%dbItem['screen_name'])
+                dbItem.update(dict(item))
+                self.userCollection.save(dbItem)
+                logger.info("Update user:%s"%dbItem['screen_name'])
             else:
                 self.userCollection.insert_one(dict(item))
                 logger.debug("Add user:%s" %item['screen_name'])

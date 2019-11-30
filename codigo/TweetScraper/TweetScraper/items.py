@@ -12,7 +12,7 @@ class Tweet(Item):
 
    # User related info
     user_id = Field()  # user id
-
+    usernameTweet = Field()
     nbr_retweet = Field()  # nbr of retweet
     nbr_favorite = Field() # nbr of favorite
     nbr_reply = Field()    # nbr of reply
@@ -31,14 +31,12 @@ class Tweet(Item):
     hash_tags = Field()
 
 class User(Item):
-    user_id = Field()            # ID of user
+    ID  = Field()            # ID of user
     name = Field()               # username of tweet
     screen_name = Field()        # user screen name
-    follower_count = Field()     # how many followers
+    followers_count = Field()     # how many followers
     statuses_count = Field()     # how many tweets
     created_at = Field()         # creation date
     verified = Field()           # verified account or not
     location = Field()           # City name
-    geo_enabled = Field()
-    url = Field()
     description = Field()        # user's description
